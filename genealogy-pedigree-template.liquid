@@ -1,0 +1,151 @@
+<!-- 
+  Genealogy Pedigree Chart - TRMNL Template
+  
+  NOTE: This file is actually Liquid markup for TRMNL.
+  Rename to full.liquid when placing in your plugin's src/ folder.
+  
+  This is a rough sketch - will need refinement during actual development.
+  Assumes JSON structure with subject, spouse, parents, and children.
+-->
+
+<div class="view view--full">
+  <div class="layout" style="padding: 8px;">
+    
+    <!-- GRANDPARENTS ROW -->
+    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+      
+      <!-- Subject's Parents -->
+      <div style="display: flex; gap: 8px;">
+        <div class="pedigree-box">
+          <div class="pedigree-name">{{ subject_parents.father.name }}</div>
+          <div class="pedigree-dates">{{ subject_parents.father.birth }}-{{ subject_parents.father.death }}</div>
+        </div>
+        <div class="pedigree-box">
+          <div class="pedigree-name">{{ subject_parents.mother.name }}</div>
+          <div class="pedigree-dates">{{ subject_parents.mother.birth }}-{{ subject_parents.mother.death }}</div>
+        </div>
+      </div>
+      
+      <!-- Spouse's Parents -->
+      <div style="display: flex; gap: 8px;">
+        <div class="pedigree-box">
+          <div class="pedigree-name">{{ spouse_parents.father.name }}</div>
+          <div class="pedigree-dates">{{ spouse_parents.father.birth }}-{{ spouse_parents.father.death }}</div>
+        </div>
+        <div class="pedigree-box">
+          <div class="pedigree-name">{{ spouse_parents.mother.name }}</div>
+          <div class="pedigree-dates">{{ spouse_parents.mother.birth }}-{{ spouse_parents.mother.death }}</div>
+        </div>
+      </div>
+      
+    </div>
+    
+    <!-- CONNECTOR LINES (SVG approach) -->
+    <svg width="100%" height="30" style="display: block;">
+      <!-- Left bracket - connects subject's parents to subject -->
+      <path d="M 100,0 L 100,15 L 180,15 L 180,30" stroke="black" fill="none" stroke-width="1"/>
+      <path d="M 180,0 L 180,15" stroke="black" fill="none" stroke-width="1"/>
+      
+      <!-- Right bracket - connects spouse's parents to spouse -->
+      <path d="M 550,0 L 550,15 L 620,15 L 620,30" stroke="black" fill="none" stroke-width="1"/>
+      <path d="M 620,0 L 620,15" stroke="black" fill="none" stroke-width="1"/>
+      
+      <!-- Center horizontal line connecting subject to spouse -->
+      <line x1="260" y1="30" x2="540" y2="30" stroke="black" stroke-width="1"/>
+    </svg>
+    
+    <!-- MAIN ROW: Photo - Subject - Spouse - Photo -->
+    <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+      
+      <!-- Subject's Photo -->
+      <div style="width: 100px; height: 130px;">
+        {% if subject.photo_url %}
+          <img class="image image-dither" src="{{ subject.photo_url }}" 
+               style="width: 100%; height: 100%; object-fit: cover;"/>
+        {% endif %}
+      </div>
+      
+      <!-- Subject Box -->
+      <div class="pedigree-box pedigree-box--main">
+        <div class="pedigree-name">{{ subject.name }}</div>
+        <div class="pedigree-dates">{{ subject.birth }}-{{ subject.death }}</div>
+      </div>
+      
+      <!-- Spouse Box -->
+      <div class="pedigree-box pedigree-box--main">
+        <div class="pedigree-name">{{ spouse.name }}</div>
+        <div class="pedigree-dates">{{ spouse.birth }}-{{ spouse.death }}</div>
+      </div>
+      
+      <!-- Spouse's Photo -->
+      <div style="width: 100px; height: 130px;">
+        {% if spouse.photo_url %}
+          <img class="image image-dither" src="{{ spouse.photo_url }}" 
+               style="width: 100%; height: 100%; object-fit: cover;"/>
+        {% endif %}
+      </div>
+      
+    </div>
+    
+    <!-- CHILDREN SECTION -->
+    <div style="margin-top: 12px; padding: 0 110px;">
+      <div style="font-size: 11px; line-height: 1.4;">
+        {% for child in children %}
+          <div>
+            <strong>{{ child.name }}</strong> ({{ child.birth }}-{{ child.death }})
+            {% if child.spouse %} m. {{ child.spouse }}{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    
+  </div>
+</div>
+
+<style>
+  .pedigree-box {
+    border: 1px solid black;
+    padding: 4px 8px;
+    text-align: center;
+    background: white;
+  }
+  
+  .pedigree-box--main {
+    min-width: 140px;
+  }
+  
+  .pedigree-name {
+    font-weight: 600;
+    font-size: 12px;
+  }
+  
+  .pedigree-dates {
+    font-size: 11px;
+  }
+</style>
+
+
+<!--
+  NOTES FOR REFINEMENT:
+  
+  1. SVG coordinates are hardcoded - will need adjustment based on actual 
+     box positions. Could calculate dynamically with JS if needed.
+  
+  2. The connector lines are the trickiest part. Alternatives:
+     - CSS borders with absolute positioning
+     - Background image
+     - Calculate in JS after render
+  
+  3. Font sizes may need tuning for readability at 124 PPI
+  
+  4. Photo dimensions (100x130) are rough - adjust based on your images
+  
+  5. Children list may overflow if too many entries - consider:
+     - Limiting to N children
+     - Two-column layout
+     - Smaller font (but test readability)
+     - Using TRMNL's overflow component
+  
+  6. The inline styles should eventually use TRMNL Framework classes
+     where possible (flex, gap, spacing utilities)
+-->

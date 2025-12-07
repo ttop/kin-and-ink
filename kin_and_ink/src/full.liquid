@@ -1,0 +1,55 @@
+<!-- Genealogy Pedigree Chart - TRMNL Template -->
+
+<div class="view view--full">
+  <div class="layout" style="padding: 16px;">
+
+    <!-- GRANDPARENTS ROW -->
+    <div style="display: flex; justify-content: center; gap: 60px;">
+
+      <!-- Subject's Parents (left couple) -->
+      <div style="display: flex; gap: 8px;">
+        <div class="pedigree-box">
+          <div class="pedigree-name">{{ subject_parents.father.name }}</div>
+          <div class="pedigree-dates">{{ subject_parents.father.birth }}-{{ subject_parents.father.death | default: "?" }}</div>
+        </div>
+        <div class="pedigree-box">
+          <div class="pedigree-name">{{ subject_parents.mother.name }}</div>
+          <div class="pedigree-dates">{{ subject_parents.mother.birth }}-{{ subject_parents.mother.death | default: "?" }}</div>
+        </div>
+      </div>
+
+      <!-- Spouse's Parents (right couple) -->
+      <div style="display: flex; gap: 8px;">
+        <div class="pedigree-box">
+          <div class="pedigree-name">{{ spouse_parents.father.name }}</div>
+          <div class="pedigree-dates">{{ spouse_parents.father.birth }}-{{ spouse_parents.father.death | default: "?" }}</div>
+        </div>
+        <div class="pedigree-box">
+          <div class="pedigree-name">{{ spouse_parents.mother.name }}</div>
+          <div class="pedigree-dates">{{ spouse_parents.mother.birth }}-{{ spouse_parents.mother.death | default: "?" }}</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<style>
+  .pedigree-box {
+    border: 1px solid black;
+    padding: 4px 8px;
+    text-align: center;
+    background: white;
+    width: 150px;
+  }
+
+  .pedigree-name {
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  .pedigree-dates {
+    font-size: 11px;
+  }
+</style>
