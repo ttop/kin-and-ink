@@ -51,6 +51,24 @@ Use Playwright MCP tools to interact with the preview:
 
 The SVG connector lines require precise x-coordinates. To recalculate them after layout changes, use Playwright to measure box positions and compute SVG-relative coordinates by subtracting the SVG's left position.
 
+### Config Switching for Testing
+
+Two test configurations are available:
+- `.trmnlp.small-family.yml` - 11 children with spouses (single-column layout)
+- `.trmnlp.large-family.yml` - 20 children without spouses (two-column layout)
+
+Use `./switch-config.sh small` or `./switch-config.sh large` to swap between them. See `README-CONFIG-SWITCHING.md` for details.
+
+### Rendering Modes
+
+The TRMNL simulator supports two rendering modes:
+- **HTML mode**: Fast browser rendering for development
+- **PNG mode**: More accurate representation using dithering, matches actual e-ink display behavior
+
+**IMPORTANT**: Always test in PNG mode before deployment. The PNG renderer applies dithering that can expose rendering artifacts not visible in HTML mode (e.g., SVG path issues, anti-aliasing problems).
+
+**Dithering Options**: The TRMNL platform has multiple dithering options available. User wants to explore these different dithering algorithms in the future to optimize the appearance of the pedigree chart on the e-ink display.
+
 ## Documentation
 
 - `kin-and-ink-requirements.md` - Requirements doc with data format, layout elements, and architecture
@@ -76,7 +94,29 @@ The SVG connector lines require precise x-coordinates. To recalculate them after
 - Fixed SVG connector line coordinates to align with box centers
 - Repositioned photos to device edges with absolute positioning
 - Made photos conditionally render (hidden when no `photo_url`)
+- Changed photo display from `object-fit: cover` to `object-fit: contain`
+- Removed photo frame borders and backgrounds at user request
 - Refactored children data format to support `first`/`second` person per entry with `child: true` flag
 - Updated `kin-and-ink-requirements.md` to document new data format
 - Added responsive children layout: 2-column grid for >15 children (children only, no spouses)
 - Tested capacity limits: single-column max 16, two-column handles 30+ easily
+- Created config switching system with `switch-config.sh` and two test configs
+- Successfully deployed plugin to TRMNL (plugin ID: 192541) using Docker with config volume mounting
+- Updated `genealogy-sample-data.json` to match the `first`/`second` schema
+
+## Known Issues
+
+**SVG Connector Lines in PNG Mode**: The connector lines have duplicate path segments (e.g., `L 206,47 L 206,47`) which cause thickness artifacts in PNG rendering mode where the dithering makes the overlapping paths visible. The lines need to be redrawn without duplicates while maintaining the correct bracket shape.
+
+The current working SVG paths from commit d0c600c (these display correctly but have the duplicate issue):
+```svg
+<!-- Left bracket: connects subject's parents to subject -->
+<path d="M 133,0 L 133,47 L 206,47" stroke="black" fill="none" stroke-width="1"/>
+<path d="M 278,0 L 278,47 L 206,47 L 206,47 L 278,47 L 278,94" stroke="black" fill="none" stroke-width="1"/>
+
+<!-- Right bracket: connects spouse's parents to spouse -->
+<path d="M 455,0 L 455,47 L 528,47" stroke="black" fill="none" stroke-width="1"/>
+<path d="M 600,0 L 600,47 L 528,47 L 528,47 L 455,47 L 455,94" stroke="black" fill="none" stroke-width="1"/>
+```
+
+The duplicates (`L 206,47 L 206,47` and `L 528,47 L 528,47`) need to be removed without breaking the visual appearance. Each bracket should create a shape that goes down from both grandparent boxes, meets at a horizontal line at y=47, then goes down to the subject/spouse box.
