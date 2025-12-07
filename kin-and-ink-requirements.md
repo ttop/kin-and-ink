@@ -49,8 +49,10 @@ Based on the provided mockup, the main view shows:
    - Spouse's photo — far right
 
 4. **Children Section** (bottom)
-   - List of children with birth-death years
-   - Spouse names where applicable (format: "m. [spouse name]")
+   - List of children with birth-death years and their spouses
+   - Each entry shows a couple (or single person if unmarried)
+   - The actual child of the subject/spouse is shown in bold
+   - Format: "Name (birth-death) m. Spouse Name (birth-death)"
 
 ### Data Requirements
 
@@ -89,11 +91,17 @@ spouse_parents
     ├── birth year
     └── death year (nullable)
 
-children[] (array)
-├── name
-├── birth year
-├── death year (nullable)
-└── spouse (string, nullable)
+children[] (array of couples)
+├── first
+│   ├── name
+│   ├── birth year
+│   ├── death year (nullable)
+│   └── child (boolean, true if this person is the child of subject/spouse)
+└── second (optional, for married children)
+    ├── name
+    ├── birth year
+    ├── death year (nullable)
+    └── child (boolean, true if this person is the child of subject/spouse)
 ```
 
 ---
