@@ -1,36 +1,42 @@
 {
   "subject": {
-    "name": "Ernest August Reyman",
+    "first_name": "Ernest August",
+    "last_name": "Reyman",
     "birth": 1851,
     "death": 1928,
     "photo_url": "https://ttop.github.io/trmnl-demo/images/m.jpg"
   },
   "spouse": {
-    "name": "Louisa Heitt",
+    "first_name": "Louisa",
+    "last_name": "Heitt",
     "birth": 1857,
     "death": 1940,
     "photo_url": "https://ttop.github.io/trmnl-demo/images/w.jpg"
   },
   "subject_parents": {
     "father": {
-      "name": "Johannes Reumann",
+      "first_name": "Johannes",
+      "last_name": "Reumann",
       "birth": 1810,
       "death": 1881
     },
     "mother": {
-      "name": "Anna Dorthea Schneider",
+      "first_name": "Anna Dorthea",
+      "last_name": "Schneider",
       "birth": 1814,
       "death": 1875
     }
   },
   "spouse_parents": {
     "father": {
-      "name": "Johannes Heidt",
+      "first_name": "Johannes",
+      "last_name": "Heidt",
       "birth": 1831,
       "death": 1904
     },
     "mother": {
-      "name": "Louisa Malch",
+      "first_name": "Louisa",
+      "last_name": "Malch",
       "birth": 1835,
       "death": null
     }
@@ -38,7 +44,8 @@
   "children": [
     {
       "first": {
-        "name": "Roy Reyman",
+        "first_name": "Roy",
+        "last_name": "Reyman",
         "birth": 1876,
         "death": 1879,
         "child": true
@@ -46,25 +53,29 @@
     },
     {
       "first": {
-        "name": "George William Reyman",
+        "first_name": "George William",
+        "last_name": "Reyman",
         "birth": 1878,
         "death": 1955,
         "child": true
       },
       "second": {
-        "name": "Lillian Amanda Johnson",
+        "first_name": "Lillian Amanda",
+        "last_name": "Johnson",
         "birth": 1883,
         "death": 1949
       }
     },
     {
       "first": {
-        "name": "George Volkert",
+        "first_name": "George",
+        "last_name": "Volkert",
         "birth": 1883,
         "death": 1941
       },
       "second": {
-        "name": "Luella E. Reyman",
+        "first_name": "Luella E.",
+        "last_name": "Reyman",
         "birth": 1880,
         "death": 1959,
         "child": true
@@ -72,51 +83,59 @@
     },
     {
       "first": {
-        "name": "John Alva Reyman",
+        "first_name": "John Alva",
+        "last_name": "Reyman",
         "birth": 1882,
         "death": 1952,
         "child": true
       },
       "second": {
-        "name": "Lillian Marie Beazley",
+        "first_name": "Lillian Marie",
+        "last_name": "Beazley",
         "birth": 1889,
         "death": 1990
       }
     },
     {
       "first": {
-        "name": "Charles Fredrick Reyman",
+        "first_name": "Charles Fredrick",
+        "last_name": "Reyman",
         "birth": 1884,
         "death": 1964,
         "child": true
       },
       "second": {
-        "name": "Eva Juanita Servis",
+        "first_name": "Eva Juanita",
+        "last_name": "Servis",
         "birth": 1898,
         "death": 1981
       }
     },
     {
       "first": {
-        "name": "William George Reyman",
+        "first_name": "William George",
+        "last_name": "Reyman",
         "birth": 1887,
         "death": 1956,
         "child": true
       },
       "second": {
-        "name": "Vera Pearl Servis",
+        "first_name": "Vera Pearl",
+        "last_name": "Servis",
         "birth": 1896,
         "death": 1966
       }
     },
     {
       "first": {
-        "name": "Walter Hugh Joy",
+        "first_name": "Walter Hugh",
+        "last_name": "Joy",
         "birth": 1886,
         "death": 1944
       },
       "second": {
-        "name": "Hattie Estella Reyman",
+        "first_name": "Hattie Estella",
+        "last_name": "Reyman",
         "birth": 1888,
         "death": 1973,
         "child": true
@@ -124,7 +143,8 @@
     },
     {
       "first": {
-        "name": "Loretta Catherine Reyman",
+        "first_name": "Loretta Catherine",
+        "last_name": "Reyman",
         "birth": 1890,
         "death": 1950,
         "child": true
@@ -132,12 +152,14 @@
     },
     {
       "first": {
-        "name": "John Mervyn Joy",
+        "first_name": "John Mervyn",
+        "last_name": "Joy",
         "birth": 1891,
         "death": 1973
       },
       "second": {
-        "name": "Florence Cora Reyman",
+        "first_name": "Florence Cora",
+        "last_name": "Reyman",
         "birth": 1891,
         "death": 1976,
         "child": true
@@ -145,26 +167,30 @@
     },
     {
       "first": {
-        "name": "Frank Lewis Reyman",
+        "first_name": "Frank Lewis",
+        "last_name": "Reyman",
         "birth": 1894,
         "death": 1987,
         "child": true
       },
       "second": {
-        "name": "Ethel Louise Tuschoff",
+        "first_name": "Ethel Louise",
+        "last_name": "Tuschoff",
         "birth": 1908,
         "death": 1946
       }
     },
     {
       "first": {
-        "name": "Ernest Rodney Reyman",
+        "first_name": "Ernest Rodney",
+        "last_name": "Reyman",
         "birth": 1899,
         "death": 1970,
         "child": true
       },
       "second": {
-        "name": "Lura Ruth Casey",
+        "first_name": "Lura Ruth",
+        "last_name": "Casey",
         "birth": 1915,
         "death": 1955
       }
