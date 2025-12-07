@@ -74,7 +74,7 @@
     <div class="children-section">
       {% for child in children %}
         <div class="child-entry">
-          <strong>{{ child.name }}</strong> ({{ child.birth }}-{{ child.death | default: "?" }}){% if child.spouse %} m. {{ child.spouse }}{% endif %}
+          {{ child.name }} ({{ child.birth }}-{{ child.death | default: "?" }}){% if child.spouse %} m. {{ child.spouse }}{% endif %}
         </div>
       {% endfor %}
     </div>
@@ -102,8 +102,8 @@
 
   .photo-frame {
     position: absolute;
-    width: 120px;
-    height: 140px;
+    width: 180px;
+    height: 210px;
     border: 1px solid black;
     background: #f0f0f0;
     display: flex;
@@ -128,7 +128,7 @@
 
   .children-section {
     margin-top: 12px;
-    padding: 0 120px;
+    padding: 0 180px;
     font-size: 10px;
     line-height: 1.4;
   }
