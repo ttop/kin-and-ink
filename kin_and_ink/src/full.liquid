@@ -1,0 +1,203 @@
+<!-- Genealogy Pedigree Chart - TRMNL Template -->
+
+<div class="view view--full">
+  <div class="layout layout--col" style="padding: 16px; justify-content: flex-start; position: relative; height: 100%; box-sizing: border-box;">
+
+    <!-- TOP ROW: Grandparents and Main Couple -->
+    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
+      <!-- Subject's Parents (left column, stacked) -->
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="pedigree-box">
+          <div class="pedigree-first-name">{{ subject_parents.father.first_name }}</div>
+          <div class="pedigree-last-name">{{ subject_parents.father.last_name }}</div>
+          <div class="pedigree-dates">{{ subject_parents.father.birth }}-{{ subject_parents.father.death | default: "?" }}</div>
+        </div>
+        <div class="pedigree-box">
+          <div class="pedigree-first-name">{{ subject_parents.mother.first_name }}</div>
+          <div class="pedigree-last-name">{{ subject_parents.mother.last_name }}</div>
+          <div class="pedigree-dates">{{ subject_parents.mother.birth }}-{{ subject_parents.mother.death | default: "?" }}</div>
+        </div>
+      </div>
+
+      <!-- Main Couple (center) -->
+      <div style="display: flex; gap: 12px;">
+        <div class="pedigree-box">
+          <div class="pedigree-first-name">{{ subject.first_name }}</div>
+          <div class="pedigree-last-name">{{ subject.last_name }}</div>
+          <div class="pedigree-dates">{{ subject.birth }}-{{ subject.death | default: "?" }}</div>
+        </div>
+        <div class="pedigree-box">
+          <div class="pedigree-first-name">{{ spouse.first_name }}</div>
+          <div class="pedigree-last-name">{{ spouse.last_name }}</div>
+          <div class="pedigree-dates">{{ spouse.birth }}-{{ spouse.death | default: "?" }}</div>
+        </div>
+      </div>
+
+      <!-- Spouse's Parents (right column, stacked) -->
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="pedigree-box">
+          <div class="pedigree-first-name">{{ spouse_parents.father.first_name }}</div>
+          <div class="pedigree-last-name">{{ spouse_parents.father.last_name }}</div>
+          <div class="pedigree-dates">{{ spouse_parents.father.birth }}-{{ spouse_parents.father.death | default: "?" }}</div>
+        </div>
+        <div class="pedigree-box">
+          <div class="pedigree-first-name">{{ spouse_parents.mother.first_name }}</div>
+          <div class="pedigree-last-name">{{ spouse_parents.mother.last_name }}</div>
+          <div class="pedigree-dates">{{ spouse_parents.mother.birth }}-{{ spouse_parents.mother.death | default: "?" }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONNECTOR LINES - Vertical layout with side connections -->
+    <svg width="100%" height="150" style="position: absolute; top: 0; left: 0; pointer-events: none;">
+      <!-- Left bracket: Subject's parents to midpoint -->
+      <path d="M 175,48 L 200,48" stroke="black" fill="none" stroke-width="1"/>
+      <path d="M 175,122 L 200,122" stroke="black" fill="none" stroke-width="1"/>
+      <path d="M 200,48 L 200,122" stroke="black" fill="none" stroke-width="1"/> <!-- midpoint vertical bar -->
+      <path d="M 200,84 L 224,84" stroke="black" fill="none" stroke-width="1"/>  <!-- midpoint to subject-->
+
+      <!-- Right bracket: Spouse's parents to midpoint -->
+      <path d="M 604,48 L 580,48" stroke="black" fill="none" stroke-width="1"/>
+      <path d="M 604,122 L 580,122" stroke="black" fill="none" stroke-width="1"/>
+      <path d="M 580,48 L 580,122" stroke="black" fill="none" stroke-width="1"/> <!-- midpoint vertical bar -->
+      <path d="M 580,84 L 555,84" stroke="black" fill="none" stroke-width="1"/>  <!-- midpoint to spouse-->
+    </svg>
+
+    <!-- PHOTOS - positioned at device edges (hidden in two-column layout) -->
+    {% if children.size <= 12 %}
+      {% if subject.photo_url %}
+        <div class="photo-frame photo-left">
+          <img src="{{ subject.photo_url }}" class="image image-dither photo"/>
+        </div>
+      {% endif %}
+      {% if spouse.photo_url %}
+        <div class="photo-frame photo-right">
+          <img src="{{ spouse.photo_url }}" class="image image-dither photo"/>
+        </div>
+      {% endif %}
+    {% endif %}
+
+
+    <!-- CHILDREN SECTION -->
+    {% if children.size > 12 %}
+      <!-- 2-column layout for many children (>12) - children only, no spouses -->
+      <div class="children-section children-section--two-column">
+        <div class="children-grid">
+          {% for entry in children %}
+            {% if entry.first.child %}
+              <div class="child-entry"><strong>{{ entry.first.first_name }} {{ entry.first.last_name }}</strong> ({{ entry.first.birth }}-{{ entry.first.death | default: "?" }})</div>
+            {% endif %}
+            {% if entry.second.child %}
+              <div class="child-entry"><strong>{{ entry.second.first_name }} {{ entry.second.last_name }}</strong> ({{ entry.second.birth }}-{{ entry.second.death | default: "?" }})</div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      <!-- Single column layout with spouses (≤12 children) -->
+      <div class="children-section">
+        {% for entry in children %}
+          <div class="child-entry">
+            {% if entry.first.child %}
+              <strong>{{ entry.first.first_name }} {{ entry.first.last_name }}</strong> ({{ entry.first.birth }}-{{ entry.first.death | default: "?" }}){% if entry.second %} m. {{ entry.second.first_name }} {{ entry.second.last_name }}{% endif %}
+            {% elsif entry.second.child %}
+              {{ entry.first.first_name }} {{ entry.first.last_name }} m. <strong>{{ entry.second.first_name }} {{ entry.second.last_name }}</strong> ({{ entry.second.birth }}-{{ entry.second.death | default: "?" }})
+            {% else %}
+              {{ entry.first.first_name }} {{ entry.first.last_name }} ({{ entry.first.birth }}-{{ entry.first.death | default: "?" }})
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<style>
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+
+  .pedigree-box {
+    border: 2px solid black;
+    padding: 6px 8px;
+    text-align: center;
+    background: white;
+    width: 160px;
+    height: 65px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .pedigree-first-name {
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.1;
+  }
+
+  .pedigree-last-name {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  .pedigree-dates {
+    font-size: 12px;
+    margin-top: 2px;
+    font-weight: 400;
+  }
+
+  .photo-frame {
+    position: absolute;
+    width: 140px;
+    height: 165px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    top: calc(50% + 75px);
+    transform: translateY(-50%);
+  }
+
+  .photo-left {
+    left: 0;
+  }
+
+  .photo-right {
+    right: 0;
+  }
+
+  .photo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+  }
+
+  .children-section {
+    margin-top: 12px;
+    padding: 0 136px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .children-section--two-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex-grow: 1;
+    padding: 0 50px;
+    margin-top: 0;
+  }
+
+  .children-section--two-column .children-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 30px;
+    grid-auto-flow: row;
+  }
+
+  .child-entry {
+    margin-bottom: 2px;
+  }
+</style>
