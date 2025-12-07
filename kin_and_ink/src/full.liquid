@@ -1,7 +1,7 @@
 <!-- Genealogy Pedigree Chart - TRMNL Template -->
 
 <div class="view view--full">
-  <div class="layout layout--col" style="padding: 16px; justify-content: flex-start; position: relative;">
+  <div class="layout layout--col" style="padding: 16px; justify-content: flex-start; position: relative; height: 100%; box-sizing: border-box;">
 
     <!-- TOP ROW: Grandparents and Main Couple -->
     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
@@ -63,35 +63,38 @@
       <path d="M 580,84 L 555,84" stroke="black" fill="none" stroke-width="1"/>  <!-- midpoint to spouse-->
     </svg>
 
-    <!-- PHOTOS - positioned at device edges -->
-    <!-- Temporarily commented out for layout work
-    {% if subject.photo_url %}
-      <div class="photo-frame photo-left">
-        <img src="{{ subject.photo_url }}" class="photo"/>
-      </div>
+    <!-- PHOTOS - positioned at device edges (hidden in two-column layout) -->
+    {% if children.size <= 12 %}
+      {% if subject.photo_url %}
+        <div class="photo-frame photo-left">
+          <img src="{{ subject.photo_url }}" class="photo"/>
+        </div>
+      {% endif %}
+      {% if spouse.photo_url %}
+        <div class="photo-frame photo-right">
+          <img src="{{ spouse.photo_url }}" class="photo"/>
+        </div>
+      {% endif %}
     {% endif %}
-    {% if spouse.photo_url %}
-      <div class="photo-frame photo-right">
-        <img src="{{ spouse.photo_url }}" class="photo"/>
-      </div>
-    {% endif %}
-    -->
+
 
     <!-- CHILDREN SECTION -->
-    {% if children.size > 15 %}
-      <!-- 2-column layout for many children (>15) - children only, no spouses -->
+    {% if children.size > 12 %}
+      <!-- 2-column layout for many children (>12) - children only, no spouses -->
       <div class="children-section children-section--two-column">
-        {% for entry in children %}
-          {% if entry.first.child %}
-            <div class="child-entry"><strong>{{ entry.first.first_name }} {{ entry.first.last_name }}</strong> ({{ entry.first.birth }}-{{ entry.first.death | default: "?" }})</div>
-          {% endif %}
-          {% if entry.second.child %}
-            <div class="child-entry"><strong>{{ entry.second.first_name }} {{ entry.second.last_name }}</strong> ({{ entry.second.birth }}-{{ entry.second.death | default: "?" }})</div>
-          {% endif %}
-        {% endfor %}
+        <div class="children-grid">
+          {% for entry in children %}
+            {% if entry.first.child %}
+              <div class="child-entry"><strong>{{ entry.first.first_name }} {{ entry.first.last_name }}</strong> ({{ entry.first.birth }}-{{ entry.first.death | default: "?" }})</div>
+            {% endif %}
+            {% if entry.second.child %}
+              <div class="child-entry"><strong>{{ entry.second.first_name }} {{ entry.second.last_name }}</strong> ({{ entry.second.birth }}-{{ entry.second.death | default: "?" }})</div>
+            {% endif %}
+          {% endfor %}
+        </div>
       </div>
     {% else %}
-      <!-- Single column layout with spouses (≤15 children) -->
+      <!-- Single column layout with spouses (≤12 children) -->
       <div class="children-section">
         {% for entry in children %}
           <div class="child-entry">
@@ -134,7 +137,7 @@
   }
 
   .pedigree-dates {
-    font-size: 11px;
+    font-size: 12px;
     margin-top: 2px;
     font-weight: 400;
   }
@@ -146,7 +149,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    top: 130px;
+    top: calc(50% + 75px);
+    transform: translateY(-50%);
   }
 
   .photo-left {
@@ -166,15 +170,24 @@
 
   .children-section {
     margin-top: 12px;
-    padding: 0 180px;
-    font-size: 10px;
+    padding: 0 136px;
+    font-size: 12px;
     line-height: 1.4;
   }
 
   .children-section--two-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex-grow: 1;
+    padding: 0 50px;
+    margin-top: 0;
+  }
+
+  .children-section--two-column .children-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    column-gap: 20px;
+    column-gap: 30px;
     grid-auto-flow: row;
   }
 
