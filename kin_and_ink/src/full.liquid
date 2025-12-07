@@ -48,13 +48,20 @@
       </div>
     </div>
 
-    <!-- CONNECTOR LINES - TODO: Update for vertical layout -->
-    <!-- Temporarily commented out while redesigning for vertical layout
-    <svg width="100%" height="94" style="display: block; margin-top: -10px; margin-bottom: -43px;">
-      <path d="M 143,0 L 143,47 L 359,47 M 359,0 L 359,94" stroke="black" fill="none" stroke-width="1"/>
-      <path d="M 910,0 L 910,47 L 694,47 M 694,0 L 694,94" stroke="black" fill="none" stroke-width="1"/>
+    <!-- CONNECTOR LINES - Vertical layout with side connections -->
+    <svg width="100%" height="150" style="position: absolute; top: 0; left: 0; pointer-events: none;">
+      <!-- Left bracket: Subject's parents to midpoint -->
+      <path d="M 175,48 L 200,48" stroke="black" fill="none" stroke-width="1"/>
+      <path d="M 175,122 L 200,122" stroke="black" fill="none" stroke-width="1"/>
+      <path d="M 200,48 L 200,122" stroke="black" fill="none" stroke-width="1"/> <!-- midpoint vertical bar -->
+      <path d="M 200,84 L 224,84" stroke="black" fill="none" stroke-width="1"/>  <!-- midpoint to subject-->
+
+      <!-- Right bracket: Spouse's parents to midpoint -->
+      <path d="M 604,48 L 580,48" stroke="black" fill="none" stroke-width="1"/>
+      <path d="M 604,122 L 580,122" stroke="black" fill="none" stroke-width="1"/>
+      <path d="M 580,48 L 580,122" stroke="black" fill="none" stroke-width="1"/> <!-- midpoint vertical bar -->
+      <path d="M 580,84 L 555,84" stroke="black" fill="none" stroke-width="1"/>  <!-- midpoint to spouse-->
     </svg>
-    -->
 
     <!-- PHOTOS - positioned at device edges -->
     <!-- Temporarily commented out for layout work
