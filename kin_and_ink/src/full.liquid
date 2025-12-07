@@ -4,44 +4,37 @@
   <div class="layout layout--col" style="padding: 16px; justify-content: flex-start; position: relative;">
 
     <!-- GRANDPARENTS ROW -->
-    <div style="display: flex; justify-content: center; gap: 40px;">
-
-      <!-- Subject's Parents (left couple) -->
-      <div style="display: flex; gap: 8px;">
-        <div class="pedigree-box">
-          <div class="pedigree-name">{{ subject_parents.father.name }}</div>
-          <div class="pedigree-dates">{{ subject_parents.father.birth }}-{{ subject_parents.father.death | default: "?" }}</div>
-        </div>
-        <div class="pedigree-box">
-          <div class="pedigree-name">{{ subject_parents.mother.name }}</div>
-          <div class="pedigree-dates">{{ subject_parents.mother.birth }}-{{ subject_parents.mother.death | default: "?" }}</div>
-        </div>
+    <div style="display: flex; justify-content: space-evenly; width: 100%;">
+      <!-- Subject's Grandfather -->
+      <div class="pedigree-box">
+        <div class="pedigree-name">{{ subject_parents.father.name }}</div>
+        <div class="pedigree-dates">{{ subject_parents.father.birth }}-{{ subject_parents.father.death | default: "?" }}</div>
       </div>
-
-      <!-- Spouse's Parents (right couple) -->
-      <div style="display: flex; gap: 8px;">
-        <div class="pedigree-box">
-          <div class="pedigree-name">{{ spouse_parents.father.name }}</div>
-          <div class="pedigree-dates">{{ spouse_parents.father.birth }}-{{ spouse_parents.father.death | default: "?" }}</div>
-        </div>
-        <div class="pedigree-box">
-          <div class="pedigree-name">{{ spouse_parents.mother.name }}</div>
-          <div class="pedigree-dates">{{ spouse_parents.mother.birth }}-{{ spouse_parents.mother.death | default: "?" }}</div>
-        </div>
+      <!-- Subject's Grandmother -->
+      <div class="pedigree-box">
+        <div class="pedigree-name">{{ subject_parents.mother.name }}</div>
+        <div class="pedigree-dates">{{ subject_parents.mother.birth }}-{{ subject_parents.mother.death | default: "?" }}</div>
       </div>
-
+      <!-- Spouse's Grandfather -->
+      <div class="pedigree-box">
+        <div class="pedigree-name">{{ spouse_parents.father.name }}</div>
+        <div class="pedigree-dates">{{ spouse_parents.father.birth }}-{{ spouse_parents.father.death | default: "?" }}</div>
+      </div>
+      <!-- Spouse's Grandmother -->
+      <div class="pedigree-box">
+        <div class="pedigree-name">{{ spouse_parents.mother.name }}</div>
+        <div class="pedigree-dates">{{ spouse_parents.mother.birth }}-{{ spouse_parents.mother.death | default: "?" }}</div>
+      </div>
     </div>
 
     <!-- CONNECTOR LINES (brackets from grandparents to main row) -->
     <!-- SVG height=94, so 50% = y=47 for the horizontal bracket line -->
     <svg width="100%" height="94" style="display: block; margin-top: -10px; margin-bottom: -43px;">
       <!-- Left bracket: subject's parents -> subject -->
-      <path d="M 133,0 L 133,47 L 206,47" stroke="black" fill="none" stroke-width="1"/>
-      <path d="M 278,0 L 278,47 L 206,47 L 206,47 L 278,47 L 278,94" stroke="black" fill="none" stroke-width="1"/>
+      <path d="M 143,0 L 143,47 L 359,47 M 359,0 L 359,94" stroke="black" fill="none" stroke-width="1"/>
 
       <!-- Right bracket: spouse's parents -> spouse -->
-      <path d="M 455,0 L 455,47 L 528,47" stroke="black" fill="none" stroke-width="1"/>
-      <path d="M 600,0 L 600,47 L 528,47 L 528,47 L 455,47 L 455,94" stroke="black" fill="none" stroke-width="1"/>
+      <path d="M 910,0 L 910,47 L 694,47 M 694,0 L 694,94" stroke="black" fill="none" stroke-width="1"/>
     </svg>
 
     <!-- MAIN ROW (Photo - Subject - Spouse - Photo) -->
@@ -57,6 +50,7 @@
     </div>
 
     <!-- PHOTOS - positioned at device edges -->
+    <!-- Temporarily commented out for layout work
     {% if subject.photo_url %}
       <div class="photo-frame photo-left">
         <img src="{{ subject.photo_url }}" class="photo"/>
@@ -67,6 +61,7 @@
         <img src="{{ spouse.photo_url }}" class="photo"/>
       </div>
     {% endif %}
+    -->
 
     <!-- CHILDREN SECTION -->
     {% if children.size > 15 %}
@@ -97,26 +92,30 @@
 
 <style>
   .pedigree-box {
-    border: 1px solid black;
-    padding: 4px 6px;
+    border: 2px solid black;
+    padding: 6px 8px;
     text-align: center;
     background: white;
-    width: 140px;
+    width: 180px;
+    height: 65px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
   .pedigree-name {
     font-weight: 600;
-    font-size: 11px;
+    font-size: 14px;
   }
 
   .pedigree-dates {
-    font-size: 10px;
+    font-size: 13px;
   }
 
   .photo-frame {
     position: absolute;
-    width: 180px;
-    height: 210px;
+    width: 140px;
+    height: 165px;
     display: flex;
     align-items: center;
     justify-content: center;
