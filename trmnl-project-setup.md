@@ -222,13 +222,10 @@ docker run \
   trmnl/trmnlp push
 ```
 
-**Note:** The push command prompts for confirmation ("Are you sure? y/n"). For non-interactive use (scripts, Claude Code), pipe "y" and use the `-i` flag with absolute paths (shell variables don't expand when piping):
+**Note:** The push command prompts for confirmation ("Are you sure? y/n"). For non-interactive use (scripts, Claude Code), pipe "y" and use the `-i` flag with absolute paths (shell variables don't expand when piping). The command must be on a single line when piping input:
 
 ```bash
-echo "y" | docker run -i \
-  --volume "/full/path/to/plugin:/plugin" \
-  --volume "/Users/username/.config/trmnlp:/root/.config/trmnlp" \
-  trmnl/trmnlp push
+echo "y" | docker run -i --volume "/full/path/to/plugin:/plugin" --volume "/Users/username/.config/trmnlp:/root/.config/trmnlp" trmnl/trmnlp push
 ```
 
 **Pull latest settings from TRMNL:**
