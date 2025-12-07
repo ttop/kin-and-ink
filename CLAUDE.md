@@ -11,7 +11,10 @@ The `full.liquid` template displays a pedigree chart with:
 - **SVG connector lines**: Bracket-style lines connecting grandparents to parents, with 90-degree turns at 50% vertical distance
 - **Main row** (center): Subject and spouse info boxes
 - **Photo frames**: Absolutely positioned at device edges (left/right), 180x210px, only rendered if `photo_url` exists
-- **Children section**: List of children with spouses, the actual child (marked with `child: true`) is bolded
+- **Children section**: Responsive layout based on family size
+  - **≤15 children**: Single column with spouses, format: "Child (dates) m. Spouse (dates)"
+  - **>15 children**: Two-column grid, children only (no spouses), format: "Child (dates)"
+  - The actual child is marked with `child: true` and shown in bold
 
 ## Data Format
 
@@ -55,6 +58,19 @@ The SVG connector lines require precise x-coordinates. To recalculate them after
 - `trmnl-project-setup.md` - Project setup steps, Docker commands, settings.yml configuration
 - `trmnlp-setup-guide.md` - trmnlp local dev setup, Hello World walkthrough
 
+## Children Capacity Testing Results
+
+**Single-column layout (with spouses):**
+- ✅ 11-14 children: Comfortable fit
+- ✅ 15-16 children: Very tight, barely fits
+- ❌ 17+ children: Text overflow/cutoff
+
+**Two-column layout (children only, >15 threshold):**
+- ✅ 17-30 children: Fits well with plenty of room
+- Estimated capacity: 35-40 children before overflow
+
+**Implementation:** Template automatically switches to 2-column layout when `children.size > 15`, showing only the children (filtering by `child: true` flag) without spouses.
+
 ## Recent Work
 
 - Fixed SVG connector line coordinates to align with box centers
@@ -62,3 +78,5 @@ The SVG connector lines require precise x-coordinates. To recalculate them after
 - Made photos conditionally render (hidden when no `photo_url`)
 - Refactored children data format to support `first`/`second` person per entry with `child: true` flag
 - Updated `kin-and-ink-requirements.md` to document new data format
+- Added responsive children layout: 2-column grid for >15 children (children only, no spouses)
+- Tested capacity limits: single-column max 16, two-column handles 30+ easily

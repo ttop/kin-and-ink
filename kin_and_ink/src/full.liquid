@@ -71,13 +71,28 @@
     {% endif %}
 
     <!-- CHILDREN SECTION -->
-    <div class="children-section">
-      {% for entry in children %}
-        <div class="child-entry">
-          {% if entry.first.child %}<strong>{{ entry.first.name }}</strong>{% else %}{{ entry.first.name }}{% endif %} ({{ entry.first.birth }}-{{ entry.first.death | default: "?" }}){% if entry.second %} m. {% if entry.second.child %}<strong>{{ entry.second.name }}</strong>{% else %}{{ entry.second.name }}{% endif %} ({{ entry.second.birth }}-{{ entry.second.death | default: "?" }}){% endif %}
-        </div>
-      {% endfor %}
-    </div>
+    {% if children.size > 15 %}
+      <!-- 2-column layout for many children (>15) - children only, no spouses -->
+      <div class="children-section children-section--two-column">
+        {% for entry in children %}
+          {% if entry.first.child %}
+            <div class="child-entry"><strong>{{ entry.first.name }}</strong> ({{ entry.first.birth }}-{{ entry.first.death | default: "?" }})</div>
+          {% endif %}
+          {% if entry.second.child %}
+            <div class="child-entry"><strong>{{ entry.second.name }}</strong> ({{ entry.second.birth }}-{{ entry.second.death | default: "?" }})</div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <!-- Single column layout with spouses (≤15 children) -->
+      <div class="children-section">
+        {% for entry in children %}
+          <div class="child-entry">
+            {% if entry.first.child %}<strong>{{ entry.first.name }}</strong>{% else %}{{ entry.first.name }}{% endif %} ({{ entry.first.birth }}-{{ entry.first.death | default: "?" }}){% if entry.second %} m. {% if entry.second.child %}<strong>{{ entry.second.name }}</strong>{% else %}{{ entry.second.name }}{% endif %} ({{ entry.second.birth }}-{{ entry.second.death | default: "?" }}){% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
 
   </div>
 </div>
@@ -104,8 +119,6 @@
     position: absolute;
     width: 180px;
     height: 210px;
-    border: 1px solid black;
-    background: #f0f0f0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -123,7 +136,8 @@
   .photo {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    object-position: center;
   }
 
   .children-section {
@@ -131,6 +145,13 @@
     padding: 0 180px;
     font-size: 10px;
     line-height: 1.4;
+  }
+
+  .children-section--two-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 20px;
+    grid-auto-flow: row;
   }
 
   .child-entry {

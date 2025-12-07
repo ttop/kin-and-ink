@@ -11,5 +11,5 @@ static_data: ''
 polling_verb: get
 polling_url: ''
 polling_headers: ''
-name: My Plugin
+name: Kin and Ink
 refresh_interval: 1440

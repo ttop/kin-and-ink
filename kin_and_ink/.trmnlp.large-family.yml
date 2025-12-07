@@ -1,0 +1,148 @@
+# TRMNLP configuration - LARGE FAMILY (20 children, two-column layout)
+# {{ env.VARIABLE }} interpolation is available here
+---
+# auto-reload when files change (`watch: false` to disable)
+watch:
+  - .trmnlp.yml
+  - src
+
+# values of custom fields (defined in src/settings.yml)
+custom_fields: {}
+
+# override variables
+variables:
+  trmnl: {}
+
+  subject:
+    name: "Ernest August Reyman"
+    birth: 1851
+    death: 1928
+    photo_url: "https://ttop.github.io/trmnl-demo/images/wide.jpg"
+
+  spouse:
+    name: "Louisa Heitt"
+    birth: 1851
+    death: 1928
+    photo_url: "https://ttop.github.io/trmnl-demo/images/tall.jpg"
+
+  subject_parents:
+    father:
+      name: "Johannes Reumann"
+      birth: 1810
+      death: 1881
+    mother:
+      name: "Anna Dorthea Schneider"
+      birth: 1814
+      death: 1875
+
+  spouse_parents:
+    father:
+      name: "Johannes Heidt"
+      birth: 1831
+      death: 1904
+    mother:
+      name: "Louisa Malch"
+      birth: 1835
+      death: null
+
+  children:
+    - first:
+        name: "Roy Reyman"
+        birth: 1876
+        death: 1879
+        child: true
+    - first:
+        name: "George William Reyman"
+        birth: 1878
+        death: 1955
+        child: true
+    - first:
+        name: "Luella E. Reyman"
+        birth: 1880
+        death: 1959
+        child: true
+    - first:
+        name: "John Alva Reyman"
+        birth: 1882
+        death: 1952
+        child: true
+    - first:
+        name: "Charles Fredrick Reyman"
+        birth: 1884
+        death: 1964
+        child: true
+    - first:
+        name: "William George Reyman"
+        birth: 1887
+        death: 1956
+        child: true
+    - first:
+        name: "Hattie Estella Reyman"
+        birth: 1888
+        death: 1973
+        child: true
+    - first:
+        name: "Loretta Catherine Reyman"
+        birth: 1890
+        death: 1950
+        child: true
+    - first:
+        name: "Florence Cora Reyman"
+        birth: 1891
+        death: 1976
+        child: true
+    - first:
+        name: "Frank Lewis Reyman"
+        birth: 1894
+        death: 1987
+        child: true
+    - first:
+        name: "Ernest Rodney Reyman"
+        birth: 1899
+        death: 1970
+        child: true
+    - first:
+        name: "Test Child Twelve"
+        birth: 1901
+        death: 1975
+        child: true
+    - first:
+        name: "Test Child Thirteen"
+        birth: 1903
+        death: 1977
+        child: true
+    - first:
+        name: "Test Child Fourteen"
+        birth: 1905
+        death: 1979
+        child: true
+    - first:
+        name: "Test Child Fifteen"
+        birth: 1907
+        death: 1981
+        child: true
+    - first:
+        name: "Test Child Sixteen"
+        birth: 1909
+        death: 1983
+        child: true
+    - first:
+        name: "Test Child Seventeen"
+        birth: 1911
+        death: 1985
+        child: true
+    - first:
+        name: "Test Child Eighteen"
+        birth: 1913
+        death: 1987
+        child: true
+    - first:
+        name: "Test Child Nineteen"
+        birth: 1915
+        death: 1989
+        child: true
+    - first:
+        name: "Test Child Twenty"
+        birth: 1917
+        death: 1991
+        child: true
