@@ -3,51 +3,52 @@
 <div class="view view--full">
   <div class="layout layout--col" style="padding: 16px; justify-content: flex-start; position: relative;">
 
-    <!-- GRANDPARENTS ROW -->
-    <div style="display: flex; justify-content: space-evenly; width: 100%;">
-      <!-- Subject's Grandfather -->
-      <div class="pedigree-box">
-        <div class="pedigree-name">{{ subject_parents.father.name }}</div>
-        <div class="pedigree-dates">{{ subject_parents.father.birth }}-{{ subject_parents.father.death | default: "?" }}</div>
+    <!-- TOP ROW: Grandparents and Main Couple -->
+    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
+      <!-- Subject's Parents (left column, stacked) -->
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="pedigree-box">
+          <div class="pedigree-name">{{ subject_parents.father.name }}</div>
+          <div class="pedigree-dates">{{ subject_parents.father.birth }}-{{ subject_parents.father.death | default: "?" }}</div>
+        </div>
+        <div class="pedigree-box">
+          <div class="pedigree-name">{{ subject_parents.mother.name }}</div>
+          <div class="pedigree-dates">{{ subject_parents.mother.birth }}-{{ subject_parents.mother.death | default: "?" }}</div>
+        </div>
       </div>
-      <!-- Subject's Grandmother -->
-      <div class="pedigree-box">
-        <div class="pedigree-name">{{ subject_parents.mother.name }}</div>
-        <div class="pedigree-dates">{{ subject_parents.mother.birth }}-{{ subject_parents.mother.death | default: "?" }}</div>
+
+      <!-- Main Couple (center) -->
+      <div style="display: flex; gap: 12px;">
+        <div class="pedigree-box">
+          <div class="pedigree-name">{{ subject.name }}</div>
+          <div class="pedigree-dates">{{ subject.birth }}-{{ subject.death | default: "?" }}</div>
+        </div>
+        <div class="pedigree-box">
+          <div class="pedigree-name">{{ spouse.name }}</div>
+          <div class="pedigree-dates">{{ spouse.birth }}-{{ spouse.death | default: "?" }}</div>
+        </div>
       </div>
-      <!-- Spouse's Grandfather -->
-      <div class="pedigree-box">
-        <div class="pedigree-name">{{ spouse_parents.father.name }}</div>
-        <div class="pedigree-dates">{{ spouse_parents.father.birth }}-{{ spouse_parents.father.death | default: "?" }}</div>
-      </div>
-      <!-- Spouse's Grandmother -->
-      <div class="pedigree-box">
-        <div class="pedigree-name">{{ spouse_parents.mother.name }}</div>
-        <div class="pedigree-dates">{{ spouse_parents.mother.birth }}-{{ spouse_parents.mother.death | default: "?" }}</div>
+
+      <!-- Spouse's Parents (right column, stacked) -->
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="pedigree-box">
+          <div class="pedigree-name">{{ spouse_parents.father.name }}</div>
+          <div class="pedigree-dates">{{ spouse_parents.father.birth }}-{{ spouse_parents.father.death | default: "?" }}</div>
+        </div>
+        <div class="pedigree-box">
+          <div class="pedigree-name">{{ spouse_parents.mother.name }}</div>
+          <div class="pedigree-dates">{{ spouse_parents.mother.birth }}-{{ spouse_parents.mother.death | default: "?" }}</div>
+        </div>
       </div>
     </div>
 
-    <!-- CONNECTOR LINES (brackets from grandparents to main row) -->
-    <!-- SVG height=94, so 50% = y=47 for the horizontal bracket line -->
+    <!-- CONNECTOR LINES - TODO: Update for vertical layout -->
+    <!-- Temporarily commented out while redesigning for vertical layout
     <svg width="100%" height="94" style="display: block; margin-top: -10px; margin-bottom: -43px;">
-      <!-- Left bracket: subject's parents -> subject -->
       <path d="M 143,0 L 143,47 L 359,47 M 359,0 L 359,94" stroke="black" fill="none" stroke-width="1"/>
-
-      <!-- Right bracket: spouse's parents -> spouse -->
       <path d="M 910,0 L 910,47 L 694,47 M 694,0 L 694,94" stroke="black" fill="none" stroke-width="1"/>
     </svg>
-
-    <!-- MAIN ROW (Photo - Subject - Spouse - Photo) -->
-    <div style="display: flex; justify-content: center; align-items: center; gap: 40px;">
-      <div class="pedigree-box">
-        <div class="pedigree-name">{{ subject.name }}</div>
-        <div class="pedigree-dates">{{ subject.birth }}-{{ subject.death | default: "?" }}</div>
-      </div>
-      <div class="pedigree-box">
-        <div class="pedigree-name">{{ spouse.name }}</div>
-        <div class="pedigree-dates">{{ spouse.birth }}-{{ spouse.death | default: "?" }}</div>
-      </div>
-    </div>
+    -->
 
     <!-- PHOTOS - positioned at device edges -->
     <!-- Temporarily commented out for layout work
@@ -96,7 +97,7 @@
     padding: 6px 8px;
     text-align: center;
     background: white;
-    width: 180px;
+    width: 160px;
     height: 65px;
     display: flex;
     flex-direction: column;
