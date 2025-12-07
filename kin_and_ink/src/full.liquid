@@ -1,10 +1,10 @@
 <!-- Genealogy Pedigree Chart - TRMNL Template -->
 
 <div class="view view--full">
-  <div class="layout" style="padding: 16px;">
+  <div class="layout layout--col" style="padding: 16px; justify-content: flex-start;">
 
     <!-- GRANDPARENTS ROW -->
-    <div style="display: flex; justify-content: center; gap: 60px;">
+    <div style="display: flex; justify-content: center; gap: 40px;">
 
       <!-- Subject's Parents (left couple) -->
       <div style="display: flex; gap: 8px;">
@@ -32,24 +32,102 @@
 
     </div>
 
+    <!-- CONNECTOR LINES (brackets from grandparents to main row) -->
+    <svg width="100%" height="94" style="display: block; margin-top: -10px; margin-bottom: -43px;">
+      <!-- Left bracket: subject's parents -> subject -->
+      <!-- Johannes Reumann (svg x=136) and Anna Dorthea (svg x=284) -> Ernest (svg x=284) -->
+      <path d="M 136,0 L 136,30 L 210,30" stroke="black" fill="none" stroke-width="1"/>
+      <path d="M 284,0 L 284,30 L 210,30 L 210,50 L 284,50 L 284,94" stroke="black" fill="none" stroke-width="1"/>
+
+      <!-- Right bracket: spouse's parents -> spouse -->
+      <!-- Johannes Heidt (svg x=464) and Louisa Malch (svg x=612) -> Louisa Heitt (svg x=464) -->
+      <path d="M 464,0 L 464,30 L 538,30" stroke="black" fill="none" stroke-width="1"/>
+      <path d="M 612,0 L 612,30 L 538,30 L 538,50 L 464,50 L 464,94" stroke="black" fill="none" stroke-width="1"/>
+    </svg>
+
+    <!-- MAIN ROW (Photo - Subject - Spouse - Photo) -->
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
+      <!-- Subject's Photo -->
+      <div class="photo-frame">
+        {% if subject.photo_url %}
+          <img src="{{ subject.photo_url }}" class="photo"/>
+        {% endif %}
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 40px;">
+        <div class="pedigree-box">
+          <div class="pedigree-name">{{ subject.name }}</div>
+          <div class="pedigree-dates">{{ subject.birth }}-{{ subject.death | default: "?" }}</div>
+        </div>
+        <div class="pedigree-box">
+          <div class="pedigree-name">{{ spouse.name }}</div>
+          <div class="pedigree-dates">{{ spouse.birth }}-{{ spouse.death | default: "?" }}</div>
+        </div>
+      </div>
+
+      <!-- Spouse's Photo -->
+      <div class="photo-frame">
+        {% if spouse.photo_url %}
+          <img src="{{ spouse.photo_url }}" class="photo"/>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- CHILDREN SECTION -->
+    <div class="children-section">
+      {% for child in children %}
+        <div class="child-entry">
+          <strong>{{ child.name }}</strong> ({{ child.birth }}-{{ child.death | default: "?" }}){% if child.spouse %} m. {{ child.spouse }}{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+
   </div>
 </div>
 
 <style>
   .pedigree-box {
     border: 1px solid black;
-    padding: 4px 8px;
+    padding: 4px 6px;
     text-align: center;
     background: white;
-    width: 150px;
+    width: 140px;
   }
 
   .pedigree-name {
     font-weight: 600;
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .pedigree-dates {
-    font-size: 11px;
+    font-size: 10px;
+  }
+
+  .photo-frame {
+    width: 80px;
+    height: 100px;
+    margin: 0 8px;
+    border: 1px solid black;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .children-section {
+    margin-top: 12px;
+    padding: 0 100px;
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .child-entry {
+    margin-bottom: 2px;
   }
 </style>
