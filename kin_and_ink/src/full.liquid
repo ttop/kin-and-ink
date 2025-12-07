@@ -67,12 +67,12 @@
     {% if children.size <= 12 %}
       {% if subject.photo_url %}
         <div class="photo-frame photo-left">
-          <img src="{{ subject.photo_url }}" class="photo"/>
+          <img src="{{ subject.photo_url }}" class="image image-dither photo"/>
         </div>
       {% endif %}
       {% if spouse.photo_url %}
         <div class="photo-frame photo-right">
-          <img src="{{ spouse.photo_url }}" class="photo"/>
+          <img src="{{ spouse.photo_url }}" class="image image-dither photo"/>
         </div>
       {% endif %}
     {% endif %}
