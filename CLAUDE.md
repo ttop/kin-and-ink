@@ -7,10 +7,19 @@ This is a TRMNL e-ink display plugin (800x480 pixels) for displaying genealogy/p
 ## Current State
 
 The `full.liquid` template displays a pedigree chart with:
-- **Grandparents row** (top): Subject's parents on left, spouse's parents on right
-- **SVG connector lines**: Bracket-style lines connecting grandparents to parents, with 90-degree turns at 50% vertical distance
-- **Main row** (center): Subject and spouse info boxes
-- **Photo frames**: Absolutely positioned at device edges (left/right), 180x210px, only rendered if `photo_url` exists
+- **Vertical layout**: Three columns across the top
+  - **Left column**: Subject's parents (father and mother stacked vertically)
+  - **Center**: Subject and spouse boxes side-by-side
+  - **Right column**: Spouse's parents (father and mother stacked vertically)
+- **SVG connector lines**: Bracket-style lines connecting parent boxes to subject/spouse
+  - Lines connect at center of rectangle sides
+  - Left bracket: coordinates x=175/200/224, y=48/122/84
+  - Right bracket: coordinates x=604/580/555, y=48/122/84
+- **Typography optimized for e-ink**:
+  - Georgia serif font for better e-ink rendering
+  - 12px first names, 14px bold last names, 11px dates
+  - Clear typographic hierarchy
+- **Photo frames**: Absolutely positioned at device edges (left/right), 140x165px, only rendered if `photo_url` exists (currently commented out)
 - **Children section**: Responsive layout based on family size
   - **≤15 children**: Single column with spouses, format: "Child (dates) m. Spouse (dates)"
   - **>15 children**: Two-column grid, children only (no spouses), format: "Child (dates)"
@@ -22,22 +31,24 @@ The data lives in `kin_and_ink/.trmnlp.yml` under `variables:`. Key structure:
 
 ```yaml
 subject/spouse:
-  name, birth, death, photo_url
+  first_name, last_name, birth, death, photo_url
 
 subject_parents/spouse_parents:
-  father: {name, birth, death}
-  mother: {name, birth, death}
+  father: {first_name, last_name, birth, death}
+  mother: {first_name, last_name, birth, death}
 
 children: (array of couples)
   - first:
-      name, birth, death
+      first_name, last_name, birth, death
       child: true  # boolean flag - this person is the child of subject/spouse
     second:        # optional, for married children
-      name, birth, death
+      first_name, last_name, birth, death
       # child: true goes on whichever person is the actual child
 ```
 
 The `child: true` flag determines which name gets bolded in the display - this allows putting names in any order (e.g., men first) while correctly identifying who is the descendant.
+
+**Schema uses `first_name` and `last_name` fields** (not single `name` field) to enable typographic hierarchy with small first names and large bold last names.
 
 ## Development Setup
 
@@ -91,32 +102,35 @@ The TRMNL simulator supports two rendering modes:
 
 ## Recent Work
 
-- Fixed SVG connector line coordinates to align with box centers
-- Repositioned photos to device edges with absolute positioning
-- Made photos conditionally render (hidden when no `photo_url`)
-- Changed photo display from `object-fit: cover` to `object-fit: contain`
-- Removed photo frame borders and backgrounds at user request
-- Refactored children data format to support `first`/`second` person per entry with `child: true` flag
-- Updated `kin-and-ink-requirements.md` to document new data format
-- Added responsive children layout: 2-column grid for >15 children (children only, no spouses)
-- Tested capacity limits: single-column max 16, two-column handles 30+ easily
-- Created config switching system with `switch-config.sh` and two test configs
-- Successfully deployed plugin to TRMNL (plugin ID: 192541) using Docker with config volume mounting
-- Updated `genealogy-sample-data.json` to match the `first`/`second` schema
+### Vertical Layout Implementation
+- Redesigned layout from horizontal grandparent row to vertical stacked columns
+- Left column: subject's parents stacked vertically
+- Right column: spouse's parents stacked vertically
+- Center: subject and spouse boxes side-by-side
+- Reduced box width from 180px to 160px to fit vertical layout
+- Tightened gaps to 12px horizontal, 8px vertical
 
-## Known Issues
+### Typography and E-ink Optimization
+- Implemented `first_name`/`last_name` schema (replacing single `name` field)
+- Added Georgia serif font for better e-ink rendering
+- Created typographic hierarchy: 12px first names, 14px bold last names, 11px dates
+- Updated all data in `.trmnlp.yml` and `genealogy-sample-data.json` to new schema
 
-**SVG Connector Lines in PNG Mode**: The connector lines have duplicate path segments (e.g., `L 206,47 L 206,47`) which cause thickness artifacts in PNG rendering mode where the dithering makes the overlapping paths visible. The lines need to be redrawn without duplicates while maintaining the correct bracket shape.
+### SVG Connector Lines
+- Redesigned connector lines for vertical layout
+- Lines connect at exact center of rectangle sides
+- Left bracket connects subject's parents to subject (x=175/200/224, y=48/122/84)
+- Right bracket connects spouse's parents to spouse (x=604/580/555, y=48/122/84)
+- Eliminated duplicate path segments that caused PNG rendering artifacts
+- SVG positioned absolutely at top:0, left:0
 
-The current working SVG paths from commit d0c600c (these display correctly but have the duplicate issue):
-```svg
-<!-- Left bracket: connects subject's parents to subject -->
-<path d="M 133,0 L 133,47 L 206,47" stroke="black" fill="none" stroke-width="1"/>
-<path d="M 278,0 L 278,47 L 206,47 L 206,47 L 278,47 L 278,94" stroke="black" fill="none" stroke-width="1"/>
+### Deployment
+- Successfully deployed plugin to TRMNL (plugin ID: 192541)
+- Current size: 2416 bytes
+- Pulled latest settings from server to sync local configuration
 
-<!-- Right bracket: connects spouse's parents to spouse -->
-<path d="M 455,0 L 455,47 L 528,47" stroke="black" fill="none" stroke-width="1"/>
-<path d="M 600,0 L 600,47 L 528,47 L 528,47 L 455,47 L 455,94" stroke="black" fill="none" stroke-width="1"/>
-```
+## Next Steps / Future Work
 
-The duplicates (`L 206,47 L 206,47` and `L 528,47 L 528,47`) need to be removed without breaking the visual appearance. Each bracket should create a shape that goes down from both grandparent boxes, meets at a horizontal line at y=47, then goes down to the subject/spouse box.
+- Explore different dithering algorithms for optimal e-ink appearance
+- Consider re-enabling photo frames (currently commented out)
+- Test with larger families (capacity testing for two-column layout)
