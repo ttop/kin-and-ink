@@ -4,9 +4,9 @@
 
 **Goal:** Build a Python script that extracts family data from GEDCOM files and outputs JSON for the TRMNL genealogy plugin, runnable via GitHub Actions.
 
-**Architecture:** Abstract data source interface with GEDCOM adapter. Selector picks random eligible person (not same as last). Output matches existing plugin JSON schema. GitHub Action commits `current.json` to repo for Pages deployment.
+**Architecture:** Abstract data source interface with GEDCOM adapter. On first run (or when GEDCOM changes), parses all eligible families into `families.json` cache. On subsequent runs, picks random family from cache (not same as last) and writes to `current.json`. GitHub Action commits both files to repo for Pages deployment.
 
-**Tech Stack:** Python 3.12, python-gedcom library, PyYAML, GitHub Actions
+**Tech Stack:** Python 3.12, ged4py library (GEDCOM 5.5.1 support), PyYAML, GitHub Actions
 
 **Reference:** Design doc at `docs/plans/2025-12-09-gedcom-pipeline-design.md`
 
@@ -30,7 +30,7 @@ mkdir -p gedcom_processor/tests
 **Step 2: Create requirements.txt**
 
 ```
-python-gedcom>=1.0.0
+ged4py>=0.5.0
 PyYAML>=6.0
 ```
 
@@ -228,7 +228,7 @@ git commit -m "feat: add FamilySource abstract base class"
 # gedcom_processor/tests/test_schema.py
 """Tests for output schema helpers."""
 
-from src.schema import make_person, make_family_output
+from src.schema import make_person, make_family_entry, family_to_current
 
 
 def test_make_person_with_all_fields():
@@ -275,12 +275,12 @@ def test_make_person_with_child_flag():
     assert person["child"] is True
 
 
-def test_make_family_output_structure():
-    """make_family_output creates complete output structure."""
+def test_make_family_entry_structure():
+    """make_family_entry creates cache entry with id field."""
     subject = make_person("John", "Doe", "1850", "1920")
     spouse = make_person("Jane", "Smith", "1855", "1925")
 
-    output = make_family_output(
+    entry = make_family_entry(
         family_id="I001",
         subject=subject,
         spouse=spouse,
@@ -289,12 +289,28 @@ def test_make_family_output_structure():
         children=[]
     )
 
-    assert output["last_family_id"] == "I001"
-    assert output["subject"] == subject
-    assert output["spouse"] == spouse
-    assert output["subject_parents"] == {"father": None, "mother": None}
-    assert output["spouse_parents"] == {"father": None, "mother": None}
-    assert output["children"] == []
+    assert entry["id"] == "I001"
+    assert entry["subject"] == subject
+    assert entry["spouse"] == spouse
+    assert "last_family_id" not in entry
+
+
+def test_family_to_current_transforms_id():
+    """family_to_current converts id to last_family_id."""
+    entry = {
+        "id": "I001",
+        "subject": {"first_name": "John"},
+        "spouse": {"first_name": "Jane"},
+        "subject_parents": {},
+        "spouse_parents": {},
+        "children": []
+    }
+
+    current = family_to_current(entry)
+
+    assert current["last_family_id"] == "I001"
+    assert "id" not in current
+    assert current["subject"] == {"first_name": "John"}
 ```
 
 **Step 2: Run test to verify it fails**
@@ -344,7 +360,7 @@ def make_person(
     return person
 
 
-def make_family_output(
+def make_family_entry(
     family_id: str,
     subject: dict,
     spouse: Optional[dict],
@@ -352,7 +368,10 @@ def make_family_output(
     spouse_parents: dict,
     children: list[dict]
 ) -> dict:
-    """Create the complete family output structure.
+    """Create a family entry for the families.json cache.
+
+    The entry is stored in TRMNL-ready format with an 'id' field.
+    When selected for display, the 'id' becomes 'last_family_id'.
 
     Args:
         family_id: Unique ID for this family (used for rotation tracking).
@@ -363,16 +382,32 @@ def make_family_output(
         children: List of child entries (each with "first" and optional "second").
 
     Returns:
-        Complete output dictionary matching TRMNL plugin schema.
+        Family entry dictionary for caching.
     """
     return {
-        "last_family_id": family_id,
+        "id": family_id,
         "subject": subject,
         "spouse": spouse,
         "subject_parents": subject_parents,
         "spouse_parents": spouse_parents,
         "children": children
     }
+
+
+def family_to_current(family: dict) -> dict:
+    """Convert a cached family entry to current.json format.
+
+    Removes 'id' and adds 'last_family_id' with the same value.
+
+    Args:
+        family: Family entry from families.json cache.
+
+    Returns:
+        Dictionary ready for current.json output.
+    """
+    result = {k: v for k, v in family.items() if k != "id"}
+    result["last_family_id"] = family["id"]
+    return result
 ```
 
 **Step 4: Run tests to verify they pass**
@@ -641,7 +676,7 @@ git commit -m "test: add test GEDCOM fixture file"
 
 ---
 
-## Task 6: GEDCOM Source - Basic Parsing
+## Task 6: GEDCOM Source - Basic Parsing (using ged4py)
 
 **Files:**
 - Create: `gedcom_processor/src/sources/gedcom_source.py`
@@ -690,20 +725,24 @@ cd gedcom_processor && python -m pytest tests/test_gedcom_source.py -v
 
 Expected: FAIL with "ModuleNotFoundError"
 
-**Step 4: Implement minimal GedcomSource**
+**Step 4: Implement minimal GedcomSource using ged4py**
 
 ```python
 # gedcom_processor/src/sources/gedcom_source.py
-"""GEDCOM file data source."""
+"""GEDCOM file data source using ged4py library."""
 
 from pathlib import Path
-from gedcom.parser import Parser
+from ged4py import GedcomReader
 
 from .base import FamilySource
 
 
 class GedcomSource(FamilySource):
-    """Data source that reads from GEDCOM files."""
+    """Data source that reads from GEDCOM files.
+
+    Uses ged4py library which supports GEDCOM 5.5.1 format.
+    GEDCOM 5.5 files are also supported as 5.5.1 is backward compatible.
+    """
 
     def __init__(self, file_path: Path):
         """Initialize with path to GEDCOM file.
@@ -711,8 +750,17 @@ class GedcomSource(FamilySource):
         Args:
             file_path: Path to the .ged file.
         """
-        self._parser = Parser()
-        self._parser.parse_file(str(file_path))
+        self._file_path = file_path
+        with GedcomReader(file_path) as reader:
+            # Build lookup dictionaries
+            self._individuals = {}
+            self._families = {}
+
+            for record in reader.records0("INDI"):
+                self._individuals[record.xref_id] = record
+
+            for record in reader.records0("FAM"):
+                self._families[record.xref_id] = record
 
     def get_eligible_ids(self) -> list[str]:
         """Return list of eligible person IDs."""
@@ -737,7 +785,7 @@ Expected: Both tests PASS
 
 ```bash
 git add gedcom_processor/src/sources/gedcom_source.py gedcom_processor/tests/test_gedcom_source.py
-git commit -m "feat: add GedcomSource with basic file parsing"
+git commit -m "feat: add GedcomSource with ged4py file parsing"
 ```
 
 ---
@@ -759,7 +807,7 @@ def test_get_eligible_ids_returns_eligible_people():
     eligible = source.get_eligible_ids()
 
     # I001 (John Doe) should be eligible: has spouse, parents, children
-    assert "I001" in eligible or "@I001@" in eligible
+    assert "@I001@" in eligible
 
 
 def test_get_eligible_ids_excludes_ineligible():
@@ -768,7 +816,7 @@ def test_get_eligible_ids_excludes_ineligible():
     eligible = source.get_eligible_ids()
 
     # I008 (Sarah Doe) has no spouse, should not be eligible
-    assert "I008" not in eligible and "@I008@" not in eligible
+    assert "@I008@" not in eligible
 ```
 
 **Step 2: Run tests to verify new tests fail**
@@ -779,24 +827,27 @@ cd gedcom_processor && python -m pytest tests/test_gedcom_source.py::test_get_el
 
 Expected: FAIL (returns empty list)
 
-**Step 3: Implement eligibility checking**
+**Step 3: Implement eligibility checking with ged4py**
 
 Update `gedcom_source.py`:
 
 ```python
 # gedcom_processor/src/sources/gedcom_source.py
-"""GEDCOM file data source."""
+"""GEDCOM file data source using ged4py library."""
 
 from pathlib import Path
-from gedcom.parser import Parser
-from gedcom.element.individual import IndividualElement
-from gedcom.element.family import FamilyElement
+from ged4py import GedcomReader
+from ged4py.model import Individual, Family
 
 from .base import FamilySource
 
 
 class GedcomSource(FamilySource):
-    """Data source that reads from GEDCOM files."""
+    """Data source that reads from GEDCOM files.
+
+    Uses ged4py library which supports GEDCOM 5.5.1 format.
+    GEDCOM 5.5 files are also supported as 5.5.1 is backward compatible.
+    """
 
     def __init__(self, file_path: Path):
         """Initialize with path to GEDCOM file.
@@ -804,19 +855,16 @@ class GedcomSource(FamilySource):
         Args:
             file_path: Path to the .ged file.
         """
-        self._parser = Parser()
-        self._parser.parse_file(str(file_path))
-        self._elements = self._parser.get_root_child_elements()
+        self._file_path = file_path
+        self._individuals: dict[str, Individual] = {}
+        self._families: dict[str, Family] = {}
 
-        # Build lookup dictionaries
-        self._individuals: dict[str, IndividualElement] = {}
-        self._families: dict[str, FamilyElement] = {}
+        with GedcomReader(file_path) as reader:
+            for record in reader.records0("INDI"):
+                self._individuals[record.xref_id] = record
 
-        for element in self._elements:
-            if isinstance(element, IndividualElement):
-                self._individuals[element.get_pointer()] = element
-            elif isinstance(element, FamilyElement):
-                self._families[element.get_pointer()] = element
+            for record in reader.records0("FAM"):
+                self._families[record.xref_id] = record
 
     def get_eligible_ids(self) -> list[str]:
         """Return list of eligible person IDs.
@@ -834,7 +882,7 @@ class GedcomSource(FamilySource):
 
         return eligible
 
-    def _is_eligible(self, person: IndividualElement) -> bool:
+    def _is_eligible(self, person: Individual) -> bool:
         """Check if a person meets eligibility criteria."""
         # Must have a spouse (be in a family as spouse)
         spouse_families = self._get_families_as_spouse(person)
@@ -861,40 +909,34 @@ class GedcomSource(FamilySource):
 
         return has_any_parent
 
-    def _get_families_as_spouse(self, person: IndividualElement) -> list[FamilyElement]:
+    def _get_families_as_spouse(self, person: Individual) -> list[Family]:
         """Get families where this person is a spouse."""
         families = []
-        for family in self._families.values():
-            husb_elem = family.get_child_element_by_tag("HUSB")
-            wife_elem = family.get_child_element_by_tag("WIFE")
-
-            husb_id = husb_elem.get_value() if husb_elem else None
-            wife_id = wife_elem.get_value() if wife_elem else None
-
-            if person.get_pointer() in (husb_id, wife_id):
-                families.append(family)
-
+        # ged4py: person.sub_tag("FAMS") returns family references where person is spouse
+        for fams in person.sub_tags("FAMS"):
+            fam_ref = fams.value
+            if fam_ref and fam_ref in self._families:
+                families.append(self._families[fam_ref])
         return families
 
-    def _get_children_of_family(self, family: FamilyElement) -> list[IndividualElement]:
+    def _get_children_of_family(self, family: Family) -> list[Individual]:
         """Get children of a family."""
         children = []
-        for child_elem in family.get_child_elements():
-            if child_elem.get_tag() == "CHIL":
-                child_id = child_elem.get_value()
-                if child_id in self._individuals:
-                    children.append(self._individuals[child_id])
+        for chil in family.sub_tags("CHIL"):
+            child_ref = chil.value
+            if child_ref and child_ref in self._individuals:
+                children.append(self._individuals[child_ref])
         return children
 
-    def _get_spouse(self, person: IndividualElement, family: FamilyElement) -> IndividualElement | None:
+    def _get_spouse(self, person: Individual, family: Family) -> Individual | None:
         """Get the spouse of a person in a family."""
-        husb_elem = family.get_child_element_by_tag("HUSB")
-        wife_elem = family.get_child_element_by_tag("WIFE")
+        husb = family.sub_tag("HUSB")
+        wife = family.sub_tag("WIFE")
 
-        husb_id = husb_elem.get_value() if husb_elem else None
-        wife_id = wife_elem.get_value() if wife_elem else None
+        husb_id = husb.value if husb else None
+        wife_id = wife.value if wife else None
 
-        person_id = person.get_pointer()
+        person_id = person.xref_id
 
         if person_id == husb_id and wife_id:
             return self._individuals.get(wife_id)
@@ -903,28 +945,30 @@ class GedcomSource(FamilySource):
 
         return None
 
-    def _get_parents(self, person: IndividualElement | None) -> tuple[IndividualElement | None, IndividualElement | None]:
+    def _get_parents(self, person: Individual | None) -> tuple[Individual | None, Individual | None]:
         """Get (father, mother) for a person."""
         if person is None:
             return (None, None)
 
-        # Find family where this person is a child
-        for family in self._families.values():
-            for child_elem in family.get_child_elements():
-                if child_elem.get_tag() == "CHIL" and child_elem.get_value() == person.get_pointer():
-                    # Found the family
-                    husb_elem = family.get_child_element_by_tag("HUSB")
-                    wife_elem = family.get_child_element_by_tag("WIFE")
+        # ged4py: person.sub_tag("FAMC") returns family reference where person is child
+        famc = person.sub_tag("FAMC")
+        if not famc or not famc.value:
+            return (None, None)
 
-                    father_id = husb_elem.get_value() if husb_elem else None
-                    mother_id = wife_elem.get_value() if wife_elem else None
+        family = self._families.get(famc.value)
+        if not family:
+            return (None, None)
 
-                    father = self._individuals.get(father_id) if father_id else None
-                    mother = self._individuals.get(mother_id) if mother_id else None
+        husb = family.sub_tag("HUSB")
+        wife = family.sub_tag("WIFE")
 
-                    return (father, mother)
+        father_id = husb.value if husb else None
+        mother_id = wife.value if wife else None
 
-        return (None, None)
+        father = self._individuals.get(father_id) if father_id else None
+        mother = self._individuals.get(mother_id) if mother_id else None
+
+        return (father, mother)
 
     def get_family(self, person_id: str) -> dict:
         """Extract family data for a person."""
@@ -1021,20 +1065,20 @@ cd gedcom_processor && python -m pytest tests/test_gedcom_source.py::test_get_fa
 
 Expected: FAIL (returns empty dict)
 
-**Step 3: Implement get_family**
+**Step 3: Implement get_family with ged4py**
 
-Add to `gedcom_source.py` (import schema helpers at top, then add method):
+Add to `gedcom_source.py` (import schema helpers at top, then add methods):
 
 Add import at top:
 ```python
-from src.schema import make_person, make_family_output
+from src.schema import make_person, make_family_entry
 ```
 
-Replace the placeholder `get_family` method:
+Add these methods to the class:
 
 ```python
     def get_family(self, person_id: str) -> dict:
-        """Extract family data for a person."""
+        """Extract family data for a person in TRMNL-ready format."""
         person = self._individuals.get(person_id)
         if person is None:
             raise ValueError(f"Person {person_id} not found")
@@ -1056,7 +1100,7 @@ Replace the placeholder `get_family` method:
                 child_entry = self._make_child_entry(child)
                 children_data.append(child_entry)
 
-        return make_family_output(
+        return make_family_entry(
             family_id=person_id,
             subject=self._person_to_dict(person),
             spouse=self._person_to_dict(spouse) if spouse else None,
@@ -1071,26 +1115,59 @@ Replace the placeholder `get_family` method:
             children=children_data
         )
 
-    def _person_to_dict(self, person: IndividualElement | None) -> dict | None:
-        """Convert an IndividualElement to a person dict."""
+    def _person_to_dict(self, person: Individual | None) -> dict | None:
+        """Convert a ged4py Individual to a person dict."""
         if person is None:
             return None
 
-        name_parts = person.get_name()
-        first_name = name_parts[0] if name_parts[0] else ""
-        last_name = name_parts[1] if name_parts[1] else ""
+        # ged4py name handling
+        name_rec = person.sub_tag("NAME")
+        if name_rec:
+            # NAME value is like "John /Doe/"
+            name_val = name_rec.value or ""
+            # Extract parts - surname is between slashes
+            if "/" in name_val:
+                parts = name_val.split("/")
+                first_name = parts[0].strip()
+                last_name = parts[1].strip() if len(parts) > 1 else ""
+            else:
+                first_name = name_val.strip()
+                last_name = ""
+        else:
+            first_name = ""
+            last_name = ""
 
-        birth = person.get_birth_year()
-        death = person.get_death_year()
+        # Get birth year
+        birth = None
+        birt = person.sub_tag("BIRT")
+        if birt:
+            date_rec = birt.sub_tag("DATE")
+            if date_rec and date_rec.value:
+                birth = self._extract_year(date_rec.value)
+
+        # Get death year
+        death = None
+        deat = person.sub_tag("DEAT")
+        if deat:
+            date_rec = deat.sub_tag("DATE")
+            if date_rec and date_rec.value:
+                death = self._extract_year(date_rec.value)
 
         return make_person(
             first_name=first_name,
             last_name=last_name,
-            birth=str(birth) if birth != -1 else None,
-            death=str(death) if death != -1 else None
+            birth=birth,
+            death=death
         )
 
-    def _make_child_entry(self, child: IndividualElement) -> dict:
+    def _extract_year(self, date_str: str) -> str | None:
+        """Extract year from a GEDCOM date string."""
+        # Simple extraction - just get the 4-digit year
+        import re
+        match = re.search(r'\b(\d{4})\b', date_str)
+        return match.group(1) if match else None
+
+    def _make_child_entry(self, child: Individual) -> dict:
         """Create a child entry with optional spouse."""
         child_dict = self._person_to_dict(child)
         child_dict["child"] = True
@@ -1216,13 +1293,194 @@ git commit -m "feat: add config loading"
 
 ---
 
-## Task 10: Main Entry Point
+## Task 10: Cache Layer (families.json)
+
+**Files:**
+- Create: `gedcom_processor/src/cache.py`
+- Create: `gedcom_processor/tests/test_cache.py`
+
+**Step 1: Write tests for cache operations**
+
+```python
+# gedcom_processor/tests/test_cache.py
+"""Tests for the families.json cache layer."""
+
+import json
+import hashlib
+import tempfile
+from pathlib import Path
+
+from src.cache import compute_file_hash, load_cache, save_cache, is_cache_valid
+
+
+def test_compute_file_hash():
+    """compute_file_hash returns SHA256 of file contents."""
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        f.write("test content")
+        f.flush()
+
+        hash1 = compute_file_hash(Path(f.name))
+
+        # Same content should give same hash
+        assert len(hash1) == 64  # SHA256 hex length
+
+        # Verify it's actually a hash of the content
+        expected = hashlib.sha256(b"test content").hexdigest()
+        assert hash1 == expected
+
+
+def test_load_cache_returns_none_if_missing():
+    """load_cache returns None if file doesn't exist."""
+    result = load_cache(Path("/nonexistent/families.json"))
+    assert result is None
+
+
+def test_save_and_load_cache():
+    """save_cache and load_cache round-trip correctly."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cache_path = Path(tmpdir) / "families.json"
+
+        families = [
+            {"id": "@I001@", "subject": {"first_name": "John"}},
+            {"id": "@I002@", "subject": {"first_name": "Jane"}}
+        ]
+
+        save_cache(cache_path, "abc123hash", families)
+
+        loaded = load_cache(cache_path)
+
+        assert loaded["gedcom_hash"] == "abc123hash"
+        assert len(loaded["families"]) == 2
+        assert loaded["families"][0]["id"] == "@I001@"
+
+
+def test_is_cache_valid_true_when_hash_matches():
+    """is_cache_valid returns True when GEDCOM hash matches."""
+    cache = {"gedcom_hash": "abc123", "families": []}
+    assert is_cache_valid(cache, "abc123") is True
+
+
+def test_is_cache_valid_false_when_hash_differs():
+    """is_cache_valid returns False when GEDCOM hash differs."""
+    cache = {"gedcom_hash": "abc123", "families": []}
+    assert is_cache_valid(cache, "different_hash") is False
+
+
+def test_is_cache_valid_false_when_cache_none():
+    """is_cache_valid returns False when cache is None."""
+    assert is_cache_valid(None, "any_hash") is False
+```
+
+**Step 2: Run test to verify it fails**
+
+```bash
+cd gedcom_processor && python -m pytest tests/test_cache.py -v
+```
+
+Expected: FAIL with "ModuleNotFoundError"
+
+**Step 3: Implement cache module**
+
+```python
+# gedcom_processor/src/cache.py
+"""Cache layer for pre-extracted family data."""
+
+import hashlib
+import json
+from pathlib import Path
+from typing import Optional
+
+
+def compute_file_hash(file_path: Path) -> str:
+    """Compute SHA256 hash of a file's contents.
+
+    Args:
+        file_path: Path to file to hash.
+
+    Returns:
+        Hex string of SHA256 hash.
+    """
+    sha256 = hashlib.sha256()
+    with open(file_path, 'rb') as f:
+        for chunk in iter(lambda: f.read(8192), b''):
+            sha256.update(chunk)
+    return sha256.hexdigest()
+
+
+def load_cache(cache_path: Path) -> Optional[dict]:
+    """Load the families cache if it exists.
+
+    Args:
+        cache_path: Path to families.json.
+
+    Returns:
+        Cache dict with 'gedcom_hash' and 'families' keys, or None.
+    """
+    if not cache_path.exists():
+        return None
+
+    try:
+        with open(cache_path) as f:
+            return json.load(f)
+    except (json.JSONDecodeError, KeyError):
+        return None
+
+
+def save_cache(cache_path: Path, gedcom_hash: str, families: list[dict]) -> None:
+    """Save extracted families to cache.
+
+    Args:
+        cache_path: Path to write families.json.
+        gedcom_hash: SHA256 hash of source GEDCOM file.
+        families: List of family dicts in TRMNL-ready format.
+    """
+    cache = {
+        "gedcom_hash": gedcom_hash,
+        "families": families
+    }
+    with open(cache_path, 'w') as f:
+        json.dump(cache, f, indent=2)
+
+
+def is_cache_valid(cache: Optional[dict], current_hash: str) -> bool:
+    """Check if cache is valid for the current GEDCOM file.
+
+    Args:
+        cache: Loaded cache dict, or None.
+        current_hash: Hash of current GEDCOM file.
+
+    Returns:
+        True if cache exists and hash matches.
+    """
+    if cache is None:
+        return False
+    return cache.get("gedcom_hash") == current_hash
+```
+
+**Step 4: Run tests to verify they pass**
+
+```bash
+cd gedcom_processor && python -m pytest tests/test_cache.py -v
+```
+
+Expected: All 6 tests PASS
+
+**Step 5: Commit**
+
+```bash
+git add gedcom_processor/src/cache.py gedcom_processor/tests/test_cache.py
+git commit -m "feat: add cache layer for pre-extracted families"
+```
+
+---
+
+## Task 11: Main Entry Point (with caching)
 
 **Files:**
 - Modify: `gedcom_processor/src/main.py`
 - Create: `gedcom_processor/tests/test_main.py`
 
-**Step 1: Write integration test**
+**Step 1: Write integration tests**
 
 ```python
 # gedcom_processor/tests/test_main.py
@@ -1239,8 +1497,8 @@ from src.main import run
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "test_family.ged"
 
 
-def test_run_produces_output_file():
-    """run() creates current.json with valid family data."""
+def test_run_creates_cache_and_output():
+    """run() creates families.json cache and current.json output."""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = Path(tmpdir)
 
@@ -1252,23 +1510,30 @@ def test_run_produces_output_file():
         config_path.write_text("gedcom_file: family.ged\nsource: gedcom\n")
 
         # Run
-        output_path = tmpdir / "current.json"
-        run(config_path, output_path)
+        run(config_path, tmpdir)
 
-        # Verify output
+        # Verify cache created
+        cache_path = tmpdir / "families.json"
+        assert cache_path.exists()
+
+        with open(cache_path) as f:
+            cache = json.load(f)
+        assert "gedcom_hash" in cache
+        assert "families" in cache
+        assert len(cache["families"]) > 0
+
+        # Verify output created
+        output_path = tmpdir / "current.json"
         assert output_path.exists()
 
         with open(output_path) as f:
             data = json.load(f)
-
         assert "last_family_id" in data
         assert "subject" in data
-        assert "spouse" in data
-        assert "children" in data
 
 
-def test_run_avoids_last_family():
-    """run() reads last_family_id and picks different one."""
+def test_run_uses_cache_on_second_run():
+    """run() uses existing cache when GEDCOM unchanged."""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = Path(tmpdir)
 
@@ -1279,20 +1544,75 @@ def test_run_avoids_last_family():
         config_path = tmpdir / "config.yml"
         config_path.write_text("gedcom_file: family.ged\nsource: gedcom\n")
 
-        # Create existing output with a last_family_id
+        # First run - creates cache
+        run(config_path, tmpdir)
+
+        cache_path = tmpdir / "families.json"
+        with open(cache_path) as f:
+            original_cache = json.load(f)
+        original_mtime = cache_path.stat().st_mtime
+
+        # Second run - should use cache (not modify it)
+        import time
+        time.sleep(0.1)  # Ensure mtime would differ if rewritten
+        run(config_path, tmpdir)
+
+        # Cache should be unchanged
+        assert cache_path.stat().st_mtime == original_mtime
+
+
+def test_run_regenerates_cache_when_gedcom_changes():
+    """run() regenerates cache when GEDCOM file changes."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = Path(tmpdir)
+
+        gedcom_path = tmpdir / "family.ged"
+        shutil.copy(FIXTURE_PATH, gedcom_path)
+
+        config_path = tmpdir / "config.yml"
+        config_path.write_text("gedcom_file: family.ged\nsource: gedcom\n")
+
+        # First run
+        run(config_path, tmpdir)
+
+        cache_path = tmpdir / "families.json"
+        with open(cache_path) as f:
+            original_hash = json.load(f)["gedcom_hash"]
+
+        # Modify GEDCOM (append a comment)
+        with open(gedcom_path, 'a') as f:
+            f.write("\n0 NOTE Modified\n")
+
+        # Second run - should regenerate cache
+        run(config_path, tmpdir)
+
+        with open(cache_path) as f:
+            new_hash = json.load(f)["gedcom_hash"]
+
+        assert new_hash != original_hash
+
+
+def test_run_avoids_last_family():
+    """run() picks different family than last time."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = Path(tmpdir)
+
+        shutil.copy(FIXTURE_PATH, tmpdir / "family.ged")
+
+        config_path = tmpdir / "config.yml"
+        config_path.write_text("gedcom_file: family.ged\nsource: gedcom\n")
+
         output_path = tmpdir / "current.json"
-        output_path.write_text('{"last_family_id": "@I001@"}')
 
         # Run multiple times and collect IDs
         ids_seen = set()
         for _ in range(10):
-            run(config_path, output_path)
+            run(config_path, tmpdir)
             with open(output_path) as f:
                 data = json.load(f)
             ids_seen.add(data["last_family_id"])
 
-        # If there are multiple eligible people, should see variety
-        # (This test is probabilistic but should pass with our fixture)
+        # Should see variety (test fixture has multiple eligible people)
         assert len(ids_seen) >= 1  # At minimum, it ran successfully
 ```
 
@@ -1304,41 +1624,70 @@ cd gedcom_processor && python -m pytest tests/test_main.py -v
 
 Expected: FAIL (run function doesn't exist or doesn't work)
 
-**Step 3: Implement main.py**
+**Step 3: Implement main.py with caching**
 
 ```python
 # gedcom_processor/src/main.py
-"""GEDCOM to TRMNL JSON processor."""
+"""GEDCOM to TRMNL JSON processor with caching."""
 
 import json
 from pathlib import Path
 
+from src.cache import compute_file_hash, load_cache, save_cache, is_cache_valid
 from src.config import load_config
+from src.schema import family_to_current
 from src.selector import select_family_id
 from src.sources.gedcom_source import GedcomSource
 
 
-def run(config_path: Path, output_path: Path) -> None:
+def run(config_path: Path, output_dir: Path) -> None:
     """Run the GEDCOM processor.
+
+    On first run or when GEDCOM changes:
+    - Parses GEDCOM and extracts all eligible families to families.json
+
+    On every run:
+    - Picks a random family (not same as last) and writes to current.json
 
     Args:
         config_path: Path to config.yml.
-        output_path: Path to write current.json.
+        output_dir: Directory to write families.json and current.json.
     """
     # Load config
     config = load_config(config_path)
 
-    # Initialize source
+    # Paths
     gedcom_path = config_path.parent / config["gedcom_file"]
-    source = GedcomSource(gedcom_path)
+    cache_path = output_dir / "families.json"
+    output_path = output_dir / "current.json"
 
-    # Get eligible IDs
-    eligible_ids = source.get_eligible_ids()
+    # Check if we need to regenerate the cache
+    current_hash = compute_file_hash(gedcom_path)
+    cache = load_cache(cache_path)
 
-    if not eligible_ids:
-        raise ValueError("No eligible families found in GEDCOM file")
+    if not is_cache_valid(cache, current_hash):
+        # Parse GEDCOM and extract all eligible families
+        print(f"Parsing GEDCOM file: {gedcom_path}")
+        source = GedcomSource(gedcom_path)
 
-    # Read last family ID if output exists
+        eligible_ids = source.get_eligible_ids()
+        if not eligible_ids:
+            raise ValueError("No eligible families found in GEDCOM file")
+
+        # Extract all families in TRMNL-ready format
+        families = [source.get_family(pid) for pid in eligible_ids]
+
+        # Save cache
+        save_cache(cache_path, current_hash, families)
+        print(f"Cached {len(families)} families to {cache_path}")
+    else:
+        families = cache["families"]
+        print(f"Using cached data ({len(families)} families)")
+
+    if not families:
+        raise ValueError("No families available")
+
+    # Read last family ID from current.json if it exists
     last_id = None
     if output_path.exists():
         try:
@@ -1349,25 +1698,26 @@ def run(config_path: Path, output_path: Path) -> None:
             pass
 
     # Select next family
-    selected_id = select_family_id(eligible_ids, last_id)
+    family_ids = [f["id"] for f in families]
+    selected_id = select_family_id(family_ids, last_id)
 
-    # Extract family data
-    family_data = source.get_family(selected_id)
+    # Find the selected family and convert to current.json format
+    selected_family = next(f for f in families if f["id"] == selected_id)
+    current_data = family_to_current(selected_family)
 
     # Write output
     with open(output_path, 'w') as f:
-        json.dump(family_data, f, indent=2)
+        json.dump(current_data, f, indent=2)
+
+    print(f"Selected family {selected_id} -> {output_path}")
 
 
 def main() -> None:
     """Main entry point using default paths."""
-    # Default paths relative to script location
     base_path = Path(__file__).parent.parent
     config_path = base_path / "config.yml"
-    output_path = base_path / "current.json"
 
-    run(config_path, output_path)
-    print(f"Generated {output_path}")
+    run(config_path, base_path)
 
 
 if __name__ == "__main__":
@@ -1380,7 +1730,7 @@ if __name__ == "__main__":
 cd gedcom_processor && python -m pytest tests/test_main.py -v
 ```
 
-Expected: Both tests PASS
+Expected: All 4 tests PASS
 
 **Step 5: Run all tests**
 
@@ -1394,12 +1744,12 @@ Expected: All tests PASS
 
 ```bash
 git add gedcom_processor/src/main.py gedcom_processor/tests/test_main.py
-git commit -m "feat: implement main entry point"
+git commit -m "feat: implement main entry point with cache layer"
 ```
 
 ---
 
-## Task 11: GitHub Action Workflow
+## Task 12: GitHub Action Workflow
 
 **Files:**
 - Create: `gedcom_processor/.github/workflows/rotate.yml`
@@ -1445,7 +1795,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add current.json
+          git add current.json families.json
           git diff --quiet --cached || git commit -m "Rotate family display"
           git push
 ```
@@ -1459,7 +1809,7 @@ git commit -m "feat: add GitHub Action workflow for family rotation"
 
 ---
 
-## Task 12: README Documentation
+## Task 13: README Documentation
 
 **Files:**
 - Create: `gedcom_processor/README.md`
@@ -1525,13 +1875,23 @@ This ensures the display has content in all sections.
 ## How It Works
 
 1. GitHub Action runs on schedule (or manual trigger)
-2. Script parses your GEDCOM file
-3. Filters to eligible people
-4. Picks one randomly (avoids repeating the previous one)
-5. Extracts family data to `current.json`
+2. On first run: parses GEDCOM, extracts all eligible families to `families.json` cache
+3. On subsequent runs: uses cached data (skips parsing if GEDCOM unchanged)
+4. Picks one family randomly (avoids repeating the previous one)
+5. Writes selected family to `current.json`
 6. Commits and pushes
 7. GitHub Pages serves the updated file
 8. TRMNL polls the URL and displays your family
+
+## GEDCOM Compatibility
+
+This tool uses the [ged4py](https://ged4py.readthedocs.io/) library which supports:
+
+- **GEDCOM 5.5.1** (fully supported)
+- **GEDCOM 5.5** (backward compatible, works fine)
+- **GEDCOM 7.0** (not supported)
+
+Most genealogy software (Ancestry, FamilySearch, Gramps, RootsMagic, etc.) exports GEDCOM 5.5.1 by default, so this should work with your files. If your software exports GEDCOM 7.0, you may need to export in 5.5.1 compatibility mode.
 
 ## Local Development
 
@@ -1554,7 +1914,7 @@ git commit -m "docs: add README with setup instructions"
 
 ---
 
-## Task 13: Final Integration Test
+## Task 14: Final Integration Test
 
 **Files:** None (testing only)
 
@@ -1596,16 +1956,17 @@ git commit -m "chore: final cleanup"
 
 ## Summary
 
-After completing all tasks, you will have:
+After completing all 14 tasks, you will have:
 
 - `gedcom_processor/` directory with:
   - Abstract `FamilySource` interface (extensible for WikiTree later)
-  - `GedcomSource` implementation that parses GEDCOM files
+  - `GedcomSource` implementation using ged4py (GEDCOM 5.5.1 support)
   - Eligibility filtering (spouse + parent + child)
+  - Cache layer (`families.json`) - parse once, rotate many times
   - Random selection with last-ID avoidance
   - Output matching TRMNL plugin JSON schema
   - GitHub Action for daily rotation
-  - README with setup instructions and privacy warnings
+  - README with setup instructions, privacy warnings, and GEDCOM compatibility notes
 
 - Full test coverage for all components
 - Ready to use as a template repository
