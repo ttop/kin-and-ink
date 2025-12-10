@@ -12,7 +12,28 @@
 
 ---
 
-## Task 1: Project Scaffold
+## Progress Tracking (2025-12-10)
+
+| Task | Status | Notes |
+|------|--------|-------|
+| 1. Project Scaffold | ✅ DONE | Committed: `feat: add gedcom_processor project scaffold` |
+| 2. Data Source Interface | ✅ DONE | `FamilySource` ABC created with tests (using unittest) |
+| 3. Output Schema | 🔄 Next | |
+| 4. Selector Logic | Pending | |
+| 5. Test GEDCOM File | Pending | Note: `john_reyman_test_1.ged` exists as real fixture |
+| 6-8. GEDCOM Source | Pending | Requires ged4py (PyPI now enabled) |
+| 9-14. Remaining | Pending | |
+
+**Environment Notes:**
+- Using `python3` (not `python`) - Python 3.11.2 available
+- Using `unittest` instead of `pytest` (works without PyPI)
+- PyPI access added to firewall (`pypi.org`, `files.pythonhosted.org`)
+- After container restart: `cd /workspace/gedcom_processor && uv pip install -r requirements.txt`
+- Run tests: `cd /workspace/gedcom_processor && python3 -m unittest discover -v`
+
+---
+
+## Task 1: Project Scaffold ✅ COMPLETE
 
 **Files:**
 - Create: `gedcom_processor/requirements.txt`
