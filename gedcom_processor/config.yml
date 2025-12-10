@@ -1,0 +1,5 @@
+# Path to your GEDCOM file
+gedcom_file: family.ged
+
+# Data source type (for future: "wikitree", etc.)
+source: gedcom
