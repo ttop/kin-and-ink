@@ -52,6 +52,8 @@ The `child: true` flag determines which name gets bolded in the display - this a
 
 ## Development Setup
 
+**Network Firewall:** This devcontainer has a firewall that blocks most external network access. If you need to reach a network resource (package registry, API, documentation site, etc.) and get connection errors like "No route to host", ask me to enable it. The allowlist is in `.devcontainer/init-firewall.sh`.
+
 Docker container running `trmnl/trmnlp serve` mounted to `kin_and_ink/` directory. Preview at http://localhost:4567/full
 
 Use Playwright MCP tools to interact with the preview:
