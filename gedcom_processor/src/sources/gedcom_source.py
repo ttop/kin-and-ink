@@ -159,11 +159,15 @@ class GedcomSource(FamilySource):
         if not family or not family["children"]:
             return False
 
-        # Must have at least one parent (on either side)
-        person_parents = self._get_parents(person)
+        # Must have an actual spouse in the family (not just be listed in a FAM record)
         spouse_id = self._get_spouse_id(person_id, family)
         spouse = self._individuals.get(spouse_id) if spouse_id else None
-        spouse_parents = self._get_parents(spouse) if spouse else (None, None)
+        if spouse is None:
+            return False
+
+        # Must have at least one parent (on either side)
+        person_parents = self._get_parents(person)
+        spouse_parents = self._get_parents(spouse)
 
         has_any_parent = (
             person_parents[0] is not None or
