@@ -8,7 +8,7 @@
 
 **Kin & Ink** is a TRMNL e-ink display plugin (800x480 pixels) for displaying genealogy/pedigree charts. The project has two main components:
 
-1. **TRMNL Plugin** (`kin_and_ink/`) - Liquid templates for rendering pedigree charts on e-ink
+1. **TRMNL Plugin** (`trmnl/`) - Liquid templates for rendering pedigree charts on e-ink
 2. **GEDCOM Processor** (`gedcom_processor/`) - Python pipeline to extract family data from GEDCOM files
 
 ---
@@ -30,14 +30,14 @@
 - Photo frames (currently commented out)
 
 **Key Files:**
-- `kin_and_ink/src/full.liquid` - Main template
-- `kin_and_ink/.trmnlp.yml` - Current data configuration
-- `kin_and_ink/.trmnlp.small-family.yml` / `.trmnlp.large-family.yml` - Test configs
+- `trmnl/src/full.liquid` - Main template
+- `trmnl/.trmnlp.yml` - Current data configuration
+- `trmnl/.trmnlp.small-family.yml` / `.trmnlp.large-family.yml` - Test configs
 
 **Local Development:**
 ```bash
 # Start server (Docker)
-cd kin_and_ink && trmnlp serve
+cd trmnl && trmnlp serve
 
 # Preview at http://localhost:4567/full
 
