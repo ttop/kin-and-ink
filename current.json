@@ -1,0 +1,34 @@
+{
+  "subject": {
+    "first_name": "Frank Lewis",
+    "last_name": "Reyman",
+    "birth": "1894",
+    "death": "1987"
+  },
+  "spouse": null,
+  "subject_parents": {
+    "father": {
+      "first_name": "Ernest August",
+      "last_name": "Reyman",
+      "birth": "1851",
+      "death": "1928"
+    },
+    "mother": null
+  },
+  "spouse_parents": {
+    "father": null,
+    "mother": null
+  },
+  "children": [
+    {
+      "first": {
+        "first_name": "Lewis Stanford",
+        "last_name": "Reyman",
+        "birth": "1933",
+        "death": "2019",
+        "child": true
+      }
+    }
+  ],
+  "last_family_id": "@I0042@"
+}
