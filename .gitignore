@@ -1,3 +1,21 @@
+# Claude Code
 .claude/
 .playwright-mcp/
 .worktrees/
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+
+# Generated output (don't commit these)
+gedcom_processor/current.json
+gedcom_processor/families.json
+
+# uv
+.python-version
