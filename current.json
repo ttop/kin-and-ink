@@ -1,9 +1,9 @@
 {
   "subject": {
-    "first_name": "Frank Lewis",
+    "first_name": "Charles Fredrick",
     "last_name": "Reyman",
-    "birth": "1894",
-    "death": "1987"
+    "birth": "1884",
+    "death": "1964"
   },
   "spouse": null,
   "subject_parents": {
@@ -22,13 +22,67 @@
   "children": [
     {
       "first": {
-        "first_name": "Lewis Stanford",
+        "first_name": "Unnamed",
         "last_name": "Reyman",
-        "birth": "1933",
+        "birth": "1916",
+        "death": "1916",
+        "child": true
+      }
+    },
+    {
+      "first": {
+        "first_name": "Cordia Mae",
+        "last_name": "Reyman",
+        "birth": "1918",
+        "death": "2000",
+        "child": true
+      }
+    },
+    {
+      "first": {
+        "first_name": "Rodney Dale",
+        "last_name": "Reyman",
+        "birth": "1921",
+        "death": "2007",
+        "child": true
+      }
+    },
+    {
+      "first": {
+        "first_name": "Harold Stanford",
+        "last_name": "Reyman",
+        "birth": "1923",
+        "death": "2015",
+        "child": true
+      }
+    },
+    {
+      "first": {
+        "first_name": "Donald Wayne",
+        "last_name": "Reyman",
+        "birth": "1929",
+        "death": "2010",
+        "child": true
+      }
+    },
+    {
+      "first": {
+        "first_name": "Darrell Eugene",
+        "last_name": "Reyman",
+        "birth": "1929",
+        "death": "2016",
+        "child": true
+      }
+    },
+    {
+      "first": {
+        "first_name": "Lois Jean",
+        "last_name": "Reyman",
+        "birth": "1931",
         "death": "2019",
         "child": true
       }
     }
   ],
-  "last_family_id": "@I0042@"
+  "last_family_id": "@I0031@"
 }
