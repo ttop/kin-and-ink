@@ -100,6 +100,39 @@ Generated: /Users/you/Documents/current.json
 
 On subsequent runs, the cache is reused unless the GEDCOM file changes (detected via SHA256 hash).
 
+## GitHub Actions (Automated Daily Rotation)
+
+This repo includes a GitHub Action that automatically rotates the displayed family daily.
+
+### Setup
+
+1. **Add your GEDCOM file** to the repo root as `family.ged`
+
+2. **Enable GitHub Pages**
+   - Go to Settings → Pages
+   - Set source to "Deploy from a branch"
+   - Select `main` branch and `/ (root)` folder
+   - Save
+
+3. **Run the workflow**
+   - Go to Actions → "Rotate Family"
+   - Click "Run workflow"
+
+4. **Configure TRMNL**
+   - Copy your GitHub Pages URL: `https://<username>.github.io/<repo>/current.json`
+   - Paste into your TRMNL genealogy plugin settings
+
+The workflow runs daily at 6am UTC. Edit `.github/workflows/rotate.yml` to change the schedule.
+
+### Privacy Warning
+
+**Your GEDCOM file will be publicly visible** if your repository is public (required for free GitHub Pages).
+
+Before uploading:
+- **Remove living people** from your GEDCOM export
+- Most genealogy software has an option to exclude living individuals
+- Review the file for sensitive information
+
 ## Running Tests
 
 ```bash

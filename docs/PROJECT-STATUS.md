@@ -49,7 +49,7 @@ cd trmnl && trmnlp serve
 
 ## Component 2: GEDCOM Processor
 
-### Status: In Progress 🔄
+### Status: Nearly Complete ✅
 
 **Goal:** Build a Python script that extracts family data from GEDCOM files and outputs JSON for the TRMNL plugin, runnable via GitHub Actions.
 
@@ -58,42 +58,44 @@ cd trmnl && trmnlp serve
 family.ged → [parse] → families.json (cache) → [select random] → current.json → TRMNL polls
 ```
 
-### Completed Tasks (1-8)
+### Completed Tasks (1-13)
 
 | Task | Description | Files |
 |------|-------------|-------|
 | 1 | Project scaffold | `requirements.txt`, `config.yml`, `src/main.py` |
 | 2 | FamilySource ABC | `src/sources/base.py` |
-| 3 | Output schema helpers | `src/schema.py` (make_person, make_family_entry, family_to_current) |
-| 4 | Selector logic | `src/selector.py` (random with last-ID avoidance) |
+| 3 | Output schema helpers | `src/schema.py` |
+| 4 | Selector logic | `src/selector.py` |
 | 5 | Test GEDCOM fixture | `tests/fixtures/test_family.ged` |
-| 6 | GedcomSource - parsing | `src/sources/gedcom_source.py` (uses ged4py) |
+| 6 | GedcomSource - parsing | `src/sources/gedcom_source.py` |
 | 7 | GedcomSource - eligibility | Checks: has spouse + children + at least one parent |
 | 8 | GedcomSource - get_family | Returns full family data in TRMNL-ready format |
+| 9 | Config loading | `src/config.py` |
+| 10 | Cache layer | `src/cache.py` |
+| 11 | Main entry point | `src/main.py`, `generate.py` (CLI with PEP 723) |
+| 12 | GitHub Action workflow | `.github/workflows/rotate.yml` |
+| 13 | README documentation | `README.md` |
 
-**Test Status:** 23 tests passing
+**Test Status:** 35 tests passing
 
-```bash
-cd /workspace/gedcom_processor
-source .venv/bin/activate
-python3 -m unittest discover -v
-```
-
-### Next Tasks (9-11) - Creates current.json!
-
-| Task | Description | Files to Create |
-|------|-------------|-----------------|
-| 9 | Config loading | `src/config.py`, `tests/test_config.py` |
-| 10 | Cache layer | `src/cache.py`, `tests/test_cache.py` |
-| 11 | Main entry point | Update `src/main.py`, `tests/test_main.py` |
-
-### Remaining Tasks (12-14)
+### Remaining Task
 
 | Task | Description |
 |------|-------------|
-| 12 | GitHub Action workflow (`.github/workflows/rotate.yml`) |
-| 13 | README documentation |
-| 14 | Final integration test |
+| 14 | Final integration test with real GEDCOM + GitHub Pages setup |
+
+### Usage
+
+```bash
+# Generate current.json from a GEDCOM file
+uv run gedcom_processor/generate.py /path/to/family.ged
+
+# Specify output directory
+uv run gedcom_processor/generate.py /path/to/family.ged -o ./output/
+
+# Run tests
+cd gedcom_processor && uv run python -m unittest discover -v
+```
 
 ### Technical Notes
 
@@ -103,38 +105,32 @@ python3 -m unittest discover -v
 - Name values are tuples: `(given, surname, suffix)`
 - Date values are `DateValueSimple` objects (convert to string for parsing)
 
-**Environment:**
-```bash
-cd /workspace/gedcom_processor
-source .venv/bin/activate
-python3 -m unittest discover -v  # Run tests
-```
-
 ---
 
-## Output Files (When Complete)
+## Output Files
 
 | File | Purpose |
 |------|---------|
-| `gedcom_processor/families.json` | Cache of all eligible families (regenerated when GEDCOM changes) |
-| `gedcom_processor/current.json` | **TRMNL data source** - selected family in TRMNL-ready format |
+| `families.json` | Cache of all eligible families (regenerated when GEDCOM changes) |
+| `current.json` | **TRMNL data source** - selected family in TRMNL-ready format |
+
+Note: Output files go in the same directory as the GEDCOM file by default, or in the directory specified with `-o`.
 
 ---
 
 ## Key Documentation
 
 - `CLAUDE.md` - Project context and current state
-- `kin-and-ink-requirements.md` - Requirements doc
-- `docs/plans/2025-12-09-gedcom-pipeline-implementation.md` - **Detailed implementation plan with code for all remaining tasks**
+- `gedcom_processor/README.md` - Setup and usage instructions
+- `docs/plans/2025-12-09-gedcom-pipeline-design.md` - Architecture design doc
+- `docs/plans/2025-12-09-gedcom-pipeline-implementation.md` - Implementation plan
 
 ---
 
-## To Continue
+## To Deploy
 
-1. Read the implementation plan: `docs/plans/2025-12-09-gedcom-pipeline-implementation.md`
-2. Start with Task 9 (Config Loading)
-3. Use the executing-plans skill for step-by-step implementation
-
-```
-continue implementing the gedcom processor from task 9
-```
+1. Push this repo to GitHub
+2. Add your GEDCOM file as `family.ged` in the repo root
+3. Enable GitHub Pages (Settings → Pages → Deploy from main branch)
+4. Run the "Rotate Family" workflow manually (Actions tab)
+5. Copy your GitHub Pages URL (`https://<user>.github.io/<repo>/current.json`) to TRMNL plugin settings
